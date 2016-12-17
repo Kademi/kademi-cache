@@ -65,4 +65,15 @@ public class DirectoryFileListService implements FileListService {
 
     }
 
+    public void clear() {
+        if (dir.listFiles() != null) {
+            for (File f : dir.listFiles()) {
+                if( !f.delete() ) {
+                    throw new RuntimeException("Could not delete: " + f.getAbsolutePath());
+                }
+            }
+        }
+
+    }
+
 }

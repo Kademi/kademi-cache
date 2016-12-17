@@ -58,6 +58,15 @@ public class TcpChannelClient implements LocalAddressAccessor {
         this.channelListeners = channelListeners;
     }
 
+    public int getHubPort() {
+        return hubPort;
+    }
+
+    public InetAddress getHubAddress() {
+        return hubAddress;
+    }
+
+
     public void start() {
         log.warn( "start: " + this.getClass().getCanonicalName() );
         running = true;
@@ -117,6 +126,7 @@ public class TcpChannelClient implements LocalAddressAccessor {
         }
     }
 
+    @Override
     public InetAddress getLocalAddress() {
         if( con != null ) {
             return con.getLocalAddress();
@@ -131,7 +141,7 @@ public class TcpChannelClient implements LocalAddressAccessor {
 
     private synchronized void connect() {
         boolean didConnect = false;
-        log.debug( "attempt to connect: " + hubAddress + ":" + hubPort );
+        log.info( "attempt to connect to: " + hubAddress + ":" + hubPort );
         try {
             MessageReceiver rcv = new MessageReceiver();
             Map<String, Object> options = new HashMap<>();
@@ -191,6 +201,7 @@ public class TcpChannelClient implements LocalAddressAccessor {
 
     private class ConnectionMonitor implements Runnable {
 
+        @Override
         public void run() {
             try {
                 while( running ) {

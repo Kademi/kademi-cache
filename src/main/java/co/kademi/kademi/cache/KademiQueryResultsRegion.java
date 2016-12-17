@@ -3,6 +3,7 @@
  */
 package co.kademi.kademi.cache;
 
+import co.kademi.kademi.channel.Channel;
 import java.util.Properties;
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.spi.CacheDataDescription;
@@ -14,12 +15,8 @@ import org.hibernate.cache.spi.QueryResultsRegion;
  */
 public class KademiQueryResultsRegion extends KademiCacheRegion implements QueryResultsRegion {
 
-    public KademiQueryResultsRegion() {
-        super(null, null, null);
-    }
-
-    public KademiQueryResultsRegion(String string, Properties props, CacheDataDescription cdd) {
-        super(string, props, cdd);
+    public KademiQueryResultsRegion(String string,Channel channel, Properties props, CacheDataDescription cdd) {
+        super(string, channel, props, cdd);
     }
 
     @Override

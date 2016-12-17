@@ -3,9 +3,9 @@
  */
 package co.kademi.kademi.cache;
 
+import co.kademi.kademi.channel.Channel;
 import java.util.Properties;
 import org.hibernate.cache.CacheException;
-import org.hibernate.cache.spi.CacheDataDescription;
 import org.hibernate.cache.spi.TimestampsRegion;
 
 /**
@@ -14,8 +14,8 @@ import org.hibernate.cache.spi.TimestampsRegion;
  */
 public class KademiTimestampsRegion extends KademiCacheRegion implements TimestampsRegion{
 
-    public KademiTimestampsRegion(String string, Properties props) {
-        super(string, props, null);
+    public KademiTimestampsRegion(String string, Channel channel, Properties props) {
+        super(string, channel, props, null);
     }
 
 

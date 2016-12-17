@@ -133,7 +133,7 @@ public class TcpChannelHub implements Service {
         @Override
         public boolean onConnect( INonBlockingConnection connection ) throws IOException {
             Client client = new Client( connection );
-            log.debug( "added new client: " + client + " on id: " + client.id );
+            log.info( "added new client: " + client + " on id: " + client.id + " - remote port:" + connection.getRemotePort() + " - local port:" + connection.getLocalPort() );
             channelListener.onConnect(client.id, client.sconn.getRemoteAddress());
             return true;
         }

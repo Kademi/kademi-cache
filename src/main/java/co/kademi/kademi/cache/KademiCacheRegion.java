@@ -1,27 +1,36 @@
 package co.kademi.kademi.cache;
 
+import co.kademi.kademi.cache.channel.InvalidateItemMessage;
+import co.kademi.kademi.channel.Channel;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import java.io.Serializable;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.spi.CacheDataDescription;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author brad
  */
-public class KademiCacheRegion implements org.hibernate.cache.spi.Region {
+public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Region {
 
-    protected final String name;
+    private static final Logger log = LoggerFactory.getLogger(KademiCacheRegion.class);
+
+    protected final String cacheName;
+    private final Channel channel;
     protected final Properties props;
     protected final CacheDataDescription cdd;
     private final Cache<Object, Object> cache;
     private final int timeout;
 
-    public KademiCacheRegion(String string, Properties props, CacheDataDescription cdd) {
-        this.name = string;
+    public KademiCacheRegion(String name, Channel channel, Properties props, CacheDataDescription cdd) {
+        this.cacheName = name;
+        this.channel = channel;
         this.props = props;
         this.cdd = cdd;
         cache = CacheBuilder.newBuilder()
@@ -29,13 +38,24 @@ public class KademiCacheRegion implements org.hibernate.cache.spi.Region {
                 .expireAfterWrite(10, TimeUnit.MINUTES)
                 .build();
         timeout = 600; // not sure of units
+
     }
 
+    public void remove(Serializable key) {
+        cache.invalidate(key);
+    }
 
+    protected void invalidate(String key) {
+        cache.invalidate(key);
+        if (channel != null) {
+            InvalidateItemMessage m = new InvalidateItemMessage(cacheName, key);
+            channel.sendNotification(m);
+        }
+    }
 
     @Override
     public String getName() {
-        return name;
+        return cacheName;
     }
 
     @Override
@@ -83,5 +103,4 @@ public class KademiCacheRegion implements org.hibernate.cache.spi.Region {
         return cache;
     }
 
-    
 }

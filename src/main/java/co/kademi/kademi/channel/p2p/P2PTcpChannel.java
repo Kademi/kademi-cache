@@ -30,16 +30,20 @@ import org.slf4j.LoggerFactory;
  *
  * @author brad
  */
-public class P2PTcpChannel implements Channel {
+public final class P2PTcpChannel implements Channel {
 
     private static final Logger log = LoggerFactory.getLogger(P2PTcpChannel.class);
 
+
+
+    private final String name;
     private final TcpChannelHub server;
     private final List<TcpChannelClient> clients;
     private final List<ChannelListener> channelListeners;
     private final P2PMemberDiscoveryService discoveryService;
 
-    public P2PTcpChannel(int port, P2PMemberDiscoveryService discoveryService, String bindPrefix) throws UnknownHostException, SocketException {
+    public P2PTcpChannel(String name, int port, P2PMemberDiscoveryService discoveryService, String bindPrefix) throws UnknownHostException, SocketException {
+        this.name = name;
         this.discoveryService = discoveryService;
         InetAddress bindAddress = findBindAddress(bindPrefix);
         this.server = new TcpChannelHub(bindAddress, port, new ChannelListener() {
@@ -60,30 +64,44 @@ public class P2PTcpChannel implements Channel {
             @Override
             public void onConnect(UUID sourceId, InetAddress remoteAddress) {
                 log.info("onConnect: sourceId={} remoteAddress={}", sourceId, remoteAddress);
+                connectToServers();
             }
         });
         this.clients = new CopyOnWriteArrayList();
         this.channelListeners = new CopyOnWriteArrayList<>();
+        Channel.register(this);
     }
 
     public void start() {
         server.start();
 
-        Collection<InetSocketAddress> peerAddresses = discoveryService.getRegisteredAddresses();
-
         InetAddress host = server.getBindAddress();
         InetSocketAddress myAddress = new InetSocketAddress(host, server.getPort());
 
+        // Add me
+        discoveryService.registerAddresses(Arrays.asList(myAddress));
+
+        connectToServers();
+    }
+
+    private void connectToServers() {
+        InetAddress host = server.getBindAddress();
+        InetSocketAddress myAddress = new InetSocketAddress(host, server.getPort());
+        log.info("Check for connections to servers. My address={}", myAddress);
+        Collection<InetSocketAddress> peerAddresses = discoveryService.getRegisteredAddresses();
         log.info("Connect to {} peers", peerAddresses.size());
         for (InetSocketAddress peerAddress : peerAddresses) {
             if (!peerAddress.equals(myAddress)) {
-                connectToServer(peerAddress);
+                if( !hasClient(peerAddress)) {
+                    connectToServer(peerAddress);
+                } else {
+                    log.info(".. already connected to {}", peerAddress);
+                }
             }
         }
-
-        // Add me
-        discoveryService.registerAddresses(Arrays.asList(myAddress));
     }
+
+
 
     public void stop() {
         server.stop();
@@ -113,10 +131,28 @@ public class P2PTcpChannel implements Channel {
     private void connectToServer(InetSocketAddress peerAddress) {
         log.info("Connect to {}", peerAddress);
         InetAddress add = peerAddress.getAddress();
-        TcpChannelClient c = new TcpChannelClient(add, this.server.getPort(), channelListeners);
-        c.start();
+        TcpChannelClient c = new TcpChannelClient(add, peerAddress.getPort(), channelListeners);
         this.clients.add(c);
+        c.start();
     }
+
+    /**
+     * True if we already have a client for the given peer address
+     *
+     * @param peerAddress
+     * @return
+     */
+    private boolean hasClient(InetSocketAddress peerAddress) {
+        for( TcpChannelClient c : this.clients) {
+            if( c.getHubPort() == peerAddress.getPort() ) {
+                if( c.getHubAddress().equals(peerAddress.getAddress())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
 
     private InetAddress findBindAddress(String bindPrefix) throws SocketException {
         Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
@@ -134,6 +170,15 @@ public class P2PTcpChannel implements Channel {
             }
         }
         return null;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    public List<TcpChannelClient> getClients() {
+        return clients;
     }
 
 }

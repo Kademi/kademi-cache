@@ -3,6 +3,7 @@
  */
 package co.kademi.kademi.cache;
 
+import co.kademi.kademi.channel.Channel;
 import java.util.Properties;
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.spi.CacheDataDescription;
@@ -16,8 +17,8 @@ import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
  */
 public class KademiEntityRegion extends KademiCacheRegion implements EntityRegion{
 
-    public KademiEntityRegion(String string, Properties props, CacheDataDescription cdd) {
-        super(string, props, cdd);
+    public KademiEntityRegion(String string,Channel channel, Properties props, CacheDataDescription cdd) {
+        super(string, channel, props, cdd);
     }
 
 

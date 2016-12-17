@@ -3,6 +3,7 @@
  */
 package co.kademi.kademi.cache;
 
+import co.kademi.kademi.channel.Channel;
 import java.util.Properties;
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.spi.CacheDataDescription;
@@ -16,12 +17,8 @@ import org.hibernate.cache.spi.access.NaturalIdRegionAccessStrategy;
  */
 public class KademiNaturalIdRegion extends KademiCacheRegion implements NaturalIdRegion{
 
-    public KademiNaturalIdRegion(String string, Properties props, CacheDataDescription cdd) {
-        super(string, props, cdd);
-    }
-
-    public KademiNaturalIdRegion() {
-        super(null, null, null);
+    public KademiNaturalIdRegion(String string, Channel channel,Properties props, CacheDataDescription cdd) {
+        super(string, channel, props, cdd);
     }
 
     @Override
