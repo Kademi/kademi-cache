@@ -31,7 +31,7 @@ public class TcpChannelClient implements LocalAddressAccessor {
     private final int hubPort;
     private final List<ChannelListener> channelListeners;
     private boolean running;
-    private ClientMessageFilter filter = new ClientMessageFilterImpl();
+    private ClientMessageFilter filter = null;
     /**
      * Keeps checking for a connection
      */
@@ -197,7 +197,7 @@ public class TcpChannelClient implements LocalAddressAccessor {
                     if( !isConnected() ) {
                         connect();
                     }
-                    Thread.sleep( 5000 );
+                    Thread.sleep( 1000 );
                 }
             } catch( InterruptedException ex ) {
                 log.warn( "connection monitor interrupted" );
@@ -207,6 +207,7 @@ public class TcpChannelClient implements LocalAddressAccessor {
 
     private class MessageReceiver implements IDataHandler {
 
+        @Override
         public boolean onData( INonBlockingConnection con ) throws IOException, BufferUnderflowException, ClosedChannelException, MaxReadSizeExceededException {
             try {
                 TcpObjectCodec.IdAndObject idAndObject = codec.decode( con );

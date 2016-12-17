@@ -1,6 +1,7 @@
 package co.kademi.kademi.channel;
 
 import java.io.Serializable;
+import java.net.InetAddress;
 import java.util.UUID;
 
 /**
@@ -21,6 +22,6 @@ public interface ChannelListener {
     /**
      * Called when we get a connection to the hub
      */
-    void onConnect();
+    void onConnect(UUID sourceId, InetAddress remoteAddress);
 
 }

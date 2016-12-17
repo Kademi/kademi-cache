@@ -1,6 +1,5 @@
 package co.kademi.kademi.channel;
 
-import co.kademi.kademi.channel.TcpObjectCodec.IdAndArray;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.SocketTimeoutException;
@@ -15,7 +14,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xsocket.MaxReadSizeExceededException;
@@ -48,9 +46,9 @@ public class TcpChannelHub implements Service {
     private LinkedBlockingQueue<ReceivedMessage> sendQueue;
     private int maxMessageSizeBytes = 100000; // 100k max message size
 
-    public TcpChannelHub( String bindAddress, int port, ChannelListener channelListener ) throws UnknownHostException {
+    public TcpChannelHub( InetAddress bindAddress, int port, ChannelListener channelListener ) throws UnknownHostException {
         this.port = port;
-        this.bindAddress = InetAddress.getByName( bindAddress );
+        this.bindAddress = bindAddress;
         this.clients = new CopyOnWriteArrayList<>();
         this.channelListener = channelListener;
     }
@@ -112,7 +110,7 @@ public class TcpChannelHub implements Service {
         return bindAddress;
     }
 
-    
+
 
     public List<String> getClients() {
         List<String> list = new ArrayList<>();
@@ -136,7 +134,7 @@ public class TcpChannelHub implements Service {
         public boolean onConnect( INonBlockingConnection connection ) throws IOException {
             Client client = new Client( connection );
             log.debug( "added new client: " + client + " on id: " + client.id );
-
+            channelListener.onConnect(client.id, client.sconn.getRemoteAddress());
             return true;
         }
 

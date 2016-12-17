@@ -8,11 +8,14 @@ import co.kademi.kademi.channel.ChannelListener;
 import co.kademi.kademi.channel.TcpChannelClient;
 import co.kademi.kademi.channel.TcpChannelHub;
 import java.io.Serializable;
-import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -36,14 +39,15 @@ public class P2PTcpChannel implements Channel {
     private final List<ChannelListener> channelListeners;
     private final P2PMemberDiscoveryService discoveryService;
 
-    public P2PTcpChannel(String bindAddress, int port, P2PMemberDiscoveryService discoveryService) throws UnknownHostException {
+    public P2PTcpChannel(int port, P2PMemberDiscoveryService discoveryService, String bindPrefix) throws UnknownHostException, SocketException {
         this.discoveryService = discoveryService;
+        InetAddress bindAddress = findBindAddress(bindPrefix);
         this.server = new TcpChannelHub(bindAddress, port, new ChannelListener() {
 
             @Override
             public void handleNotification(UUID sourceId, Serializable msg) {
-                log.info("handleNotification: source={} msg class={}", sourceId, msg.getClass());
-                for( ChannelListener l : channelListeners) {
+                log.info("handleNotification: source={} receiver={} msg class={}", sourceId, server.getBindAddress(), msg.getClass());
+                for (ChannelListener l : channelListeners) {
                     l.handleNotification(sourceId, msg);
                 }
             }
@@ -54,8 +58,8 @@ public class P2PTcpChannel implements Channel {
             }
 
             @Override
-            public void onConnect() {
-                log.info("onConnect");
+            public void onConnect(UUID sourceId, InetAddress remoteAddress) {
+                log.info("onConnect: sourceId={} remoteAddress={}", sourceId, remoteAddress);
             }
         });
         this.clients = new CopyOnWriteArrayList();
@@ -66,15 +70,24 @@ public class P2PTcpChannel implements Channel {
         server.start();
 
         Collection<InetSocketAddress> peerAddresses = discoveryService.getRegisteredAddresses();
+
+        InetAddress host = server.getBindAddress();
+        InetSocketAddress myAddress = new InetSocketAddress(host, server.getPort());
+
         log.info("Connect to {} peers", peerAddresses.size());
-        for( InetSocketAddress peerAddress : peerAddresses ) {
-            connectToServer(peerAddress);
+        for (InetSocketAddress peerAddress : peerAddresses) {
+            if (!peerAddress.equals(myAddress)) {
+                connectToServer(peerAddress);
+            }
         }
+
+        // Add me
+        discoveryService.registerAddresses(Arrays.asList(myAddress));
     }
 
     public void stop() {
         server.stop();
-        for( TcpChannelClient c : clients ) {
+        for (TcpChannelClient c : clients) {
             c.stop();
         }
         clients.clear();
@@ -82,14 +95,14 @@ public class P2PTcpChannel implements Channel {
 
     @Override
     public void sendNotification(Serializable msg) {
-        for( TcpChannelClient client : clients ) {
+        for (TcpChannelClient client : clients) {
             client.sendNotification(msg);
         }
     }
 
     @Override
     public void registerListener(ChannelListener channelListener) {
-        channelListeners.add( channelListener );
+        channelListeners.add(channelListener);
     }
 
     @Override
@@ -105,5 +118,22 @@ public class P2PTcpChannel implements Channel {
         this.clients.add(c);
     }
 
+    private InetAddress findBindAddress(String bindPrefix) throws SocketException {
+        Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
+
+        while (interfaces.hasMoreElements()) {
+            NetworkInterface nic = interfaces.nextElement();
+            Enumeration<InetAddress> addresses = nic.getInetAddresses();
+            while (addresses.hasMoreElements()) {
+                InetAddress address = addresses.nextElement();
+
+                String localIp = address.getHostAddress();
+                if (localIp.startsWith(bindPrefix)) {
+                    return address;
+                }
+            }
+        }
+        return null;
+    }
 
 }

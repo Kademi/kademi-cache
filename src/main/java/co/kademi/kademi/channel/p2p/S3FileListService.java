@@ -1,4 +1,7 @@
-package co.kademi.kademi.channel.p2p.s3;
+/*
+ * Kademi
+ */
+package co.kademi.kademi.channel.p2p;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.ClientConfiguration;
@@ -10,20 +13,19 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import java.io.ByteArrayInputStream;
 import java.net.InetSocketAddress;
-import java.util.Collection;
 import java.util.LinkedList;
-import java.util.StringTokenizer;
+import java.util.List;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  *
- * @author Wesley
+ * @author brad
  */
-public class S3P2PMemberDiscoveryService {
+public class S3FileListService implements FileListService {
 
-    private static final Logger log = LoggerFactory.getLogger(S3P2PMemberDiscoveryService.class);
+    private static final Logger log = LoggerFactory.getLogger(S3FileListService.class);
 
     /**
      * Delimiter to use in S3 entries name.
@@ -56,10 +58,11 @@ public class S3P2PMemberDiscoveryService {
     private AmazonS3 s3;
     private boolean initFinished = false;
 
-    public Collection<InetSocketAddress> getRegisteredAddresses() {
+    @Override
+    public List<String> getFileList() {
         initClient();
 
-        Collection<InetSocketAddress> addrs = new LinkedList<>();
+        List<String> addrs = new LinkedList<>();
 
         try {
             ObjectListing list = s3.listObjects(bucketName);
@@ -67,33 +70,8 @@ public class S3P2PMemberDiscoveryService {
             do {
                 for (S3ObjectSummary sum : list.getObjectSummaries()) {
                     String key = sum.getKey();
-
-                    StringTokenizer st = new StringTokenizer(key, DELIM);
-
-                    if (st.countTokens() != 2) {
-                        throw new RuntimeException("Failed to parse S3 entry due to invalid format: " + key);
-                    } else {
-                        String addrStr = st.nextToken();
-                        String portStr = st.nextToken();
-
-                        int port = -1;
-
-                        try {
-                            port = Integer.parseInt(portStr);
-                        } catch (NumberFormatException ex) {
-                            log.error("Failed to parse port for S3 entry: " + key, ex);
-                        }
-                        if (port != -1) {
-                            try {
-                                addrs.add(new InetSocketAddress(addrStr, port));
-                            } catch (IllegalArgumentException ex) {
-                                log.error("Failed to parse port for S3 entry: " + key, ex);
-                            }
-                        }
-
-                    }
+                    addrs.add(key);
                 }
-
                 if (truncated) {
                     list = s3.listNextBatchOfObjects(list);
                 }
@@ -103,62 +81,6 @@ public class S3P2PMemberDiscoveryService {
         }
 
         return addrs;
-    }
-
-    /**
-     * Registers new addresses.
-     * <p>
-     * Implementation should accept duplicates quietly, but should not register
-     * address if it is already registered.
-     *
-     * @param addrs Addresses to register. Not {@code null} and not empty.
-     */
-    public void registerAddresses(Collection<InetSocketAddress> addrs) {
-        initClient();
-
-        for (InetSocketAddress addr : addrs) {
-            String key = key(addr);
-
-            try {
-                s3.putObject(bucketName, key, new ByteArrayInputStream(ENTRY_CONTENT), ENTRY_METADATA);
-            } catch (AmazonClientException e) {
-                throw new RuntimeException("Failed to put entry [bucketName=" + bucketName
-                        + ", entry=" + key + ']', e);
-            }
-        }
-    }
-
-    public void unregisterAddresses(Collection<InetSocketAddress> addrs) {
-        initClient();
-
-        for (InetSocketAddress addr : addrs) {
-            String key = key(addr);
-
-            try {
-                s3.deleteObject(bucketName, key);
-            } catch (AmazonClientException e) {
-                throw new RuntimeException("Failed to delete entry [bucketName=" + bucketName
-                        + ", entry=" + key + ']', e);
-            }
-        }
-    }
-
-    /**
-     * Gets S3 key for provided address.
-     *
-     * @param addr Node address.
-     * @return Key.
-     */
-    private String key(InetSocketAddress addr) {
-        assert addr != null;
-
-        StringBuilder sb = new StringBuilder();
-
-        sb.append(addr.getAddress().getHostAddress())
-                .append(DELIM)
-                .append(addr.getPort());
-
-        return sb.toString();
     }
 
     private void initClient() {
@@ -242,4 +164,29 @@ public class S3P2PMemberDiscoveryService {
         }
     }
 
+    @Override
+    public void addFileList(List<String> list) {
+        initClient();
+
+        for (String key : list) {
+            try {
+                s3.putObject(bucketName, key, new ByteArrayInputStream(ENTRY_CONTENT), ENTRY_METADATA);
+            } catch (AmazonClientException e) {
+                throw new RuntimeException("Failed to put entry [bucketName=" + bucketName+ ", entry=" + key + ']', e);
+            }
+        }
+    }
+
+    @Override
+    public void removeFileList(List<String> list) {
+        initClient();
+
+        for (String key : list) {
+            try {
+                s3.deleteObject(bucketName, key);
+            } catch (AmazonClientException e) {
+                throw new RuntimeException("Failed to delete entry [bucketName=" + bucketName+ ", entry=" + key + ']', e);
+            }
+        }
+    }
 }
