@@ -1,6 +1,6 @@
 package co.kademi.kademi.channel;
 
-import java.net.InetAddress;
+import java.net.InetSocketAddress;
 
 /**
  * Represents a means to find the current IP address.
@@ -18,5 +18,5 @@ import java.net.InetAddress;
  * @author brad
  */
 public interface LocalAddressAccessor {
-    InetAddress getLocalAddress();
+    InetSocketAddress getLocalAddress();
 }

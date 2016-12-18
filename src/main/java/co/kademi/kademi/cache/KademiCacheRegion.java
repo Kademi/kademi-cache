@@ -45,7 +45,7 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
         cache.invalidate(key);
     }
 
-    protected void invalidate(String key) {
+    protected void invalidate(Serializable key) {
         cache.invalidate(key);
         if (channel != null) {
             InvalidateItemMessage m = new InvalidateItemMessage(cacheName, key);

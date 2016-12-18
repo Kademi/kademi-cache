@@ -1,7 +1,6 @@
 package co.kademi.kademi.channel;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.net.InetSocketAddress;
 
 /**
  *
@@ -9,20 +8,15 @@ import java.net.UnknownHostException;
  */
 public class StaticLocalAddressAccessor implements LocalAddressAccessor{
 
-    private final InetAddress address;
+    private final InetSocketAddress address;
 
-    public StaticLocalAddressAccessor( InetAddress address ) {
+    public StaticLocalAddressAccessor( InetSocketAddress address ) {
         this.address = address;
     }
 
-    public StaticLocalAddressAccessor(String s) throws UnknownHostException {
-        this.address = InetAddress.getByName( s );
-    }
-
-
 
     @Override
-    public InetAddress getLocalAddress() {
+    public InetSocketAddress getLocalAddress() {
         return address;
     }
 

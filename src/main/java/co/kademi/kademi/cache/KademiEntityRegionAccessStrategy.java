@@ -3,6 +3,7 @@
  */
 package co.kademi.kademi.cache;
 
+import java.io.Serializable;
 import java.util.Properties;
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.spi.EntityRegion;
@@ -47,7 +48,8 @@ public class KademiEntityRegionAccessStrategy implements EntityRegionAccessStrat
 
     @Override
     public boolean afterUpdate(Object key, Object value, Object currentVersion, Object previousVersion, SoftLock lock) throws CacheException {
-        entityRegion.getCache().invalidate(key);
+//        entityRegion.getCache().invalidate(key);
+        entityRegion.invalidate((Serializable) key);
         return true;
 
     }
@@ -102,6 +104,7 @@ public class KademiEntityRegionAccessStrategy implements EntityRegionAccessStrat
     @Override
     public void evict(Object key) throws CacheException {
         entityRegion.getCache().invalidate(key);
+        entityRegion.invalidate((Serializable) key); 
     }
 
     @Override

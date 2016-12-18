@@ -16,6 +16,7 @@ import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -114,6 +115,7 @@ public final class P2PTcpChannel implements Channel {
     @Override
     public void sendNotification(Serializable msg) {
         for (TcpChannelClient client : clients) {
+            log.info("sendNotification: to={} msg={}", client, msg);
             client.sendNotification(msg);
         }
     }
@@ -131,7 +133,12 @@ public final class P2PTcpChannel implements Channel {
     private void connectToServer(InetSocketAddress peerAddress) {
         log.info("Connect to {}", peerAddress);
         InetAddress add = peerAddress.getAddress();
-        TcpChannelClient c = new TcpChannelClient(add, peerAddress.getPort(), channelListeners);
+        TcpChannelClient c = new TcpChannelClient(add, peerAddress.getPort(), channelListeners, () -> {
+            log.info("Lost connection to {}", peerAddress);
+            this.discoveryService.unregisterAddresses(Arrays.asList(peerAddress));
+
+            removeClient(peerAddress);
+        });
         this.clients.add(c);
         c.start();
     }
@@ -179,6 +186,25 @@ public final class P2PTcpChannel implements Channel {
 
     public List<TcpChannelClient> getClients() {
         return clients;
+    }
+
+    private void removeClient(InetSocketAddress peerAddress) {
+        log.info("Remove connection: {}", peerAddress);
+
+        TcpChannelClient clientToRemove = null;
+        Iterator<TcpChannelClient> it = clients.iterator();
+        while(it.hasNext() ) {
+            TcpChannelClient c = it.next();
+            if( c.getHubPort() == peerAddress.getPort()) {
+                if( c.getHubAddress().equals(peerAddress.getAddress())) {
+                    clientToRemove = c;
+                    break;
+                }
+            }
+        }
+        if( clientToRemove != null ) {
+            clients.remove(clientToRemove);
+        }
     }
 
 }

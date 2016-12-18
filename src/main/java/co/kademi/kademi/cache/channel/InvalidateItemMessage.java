@@ -30,5 +30,11 @@ public class InvalidateItemMessage implements Serializable {
     public Serializable getKey() {
         return key;
     }
-    
+
+    @Override
+    public String toString() {
+        return "Invalidate: " + cacheName + "/" + key;
+    }
+
+
 }
