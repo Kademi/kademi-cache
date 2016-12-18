@@ -17,6 +17,7 @@ import java.util.UUID;
  * @author brad
  */
 public class LocalChannelRunner {
+
     public static void main(String[] args) throws UnknownHostException, SocketException, InterruptedException {
         DirectoryFileListService fileListService = new DirectoryFileListService();
         FileListP2PMemberDiscoveryService disco = new FileListP2PMemberDiscoveryService(fileListService);
@@ -46,8 +47,12 @@ public class LocalChannelRunner {
             System.out.println("Enter a key to send");
             String d = scanner.next();
 
-            ch1.sendNotification(new InvalidateItemMessage("cache1", d));
-            System.out.println("Sent.");
+            long tm = System.currentTimeMillis();
+            for (int count = 0; count < 100; count++) {
+                ch1.sendNotification(new InvalidateItemMessage("cache1", d + "-" + count));
+            }
+            tm = System.currentTimeMillis() - tm;
+            System.out.println("Sent. Duration=" + tm + "ms");
 //            System.out.println("sleep..");
 //            Thread.sleep(1000);
 //            ch2.sendNotification(new InvalidateItemMessage("cache2", "key2"));

@@ -137,7 +137,13 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
             InetSocketAddress add = new InetSocketAddress(hubAddress, hubPort);
             ConnectFuture future = connector.connect(add);
             if (future.await(5000)) {
-                session = future.getSession();
+                try {
+                    session = future.getSession();
+                } catch (Exception e) {
+                    session = null;
+                    log.warn("Failed to connect to: " + hubAddress + ":" + hubPort);
+                    connectFailedCount++;
+                }
             } else {
                 session = null;
                 log.warn("Failed to connect to: " + hubAddress + ":" + hubPort);
@@ -206,7 +212,7 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
 
     @Override
     public void exceptionCaught(IoSession session, Throwable cause) throws Exception {
-        log.info("exceptionCaught");
+        log.info("exceptionCaught", cause);
     }
 
     @Override
@@ -267,7 +273,7 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
                 log.warn("QueueSender: socket gone");
                 sendQueue.add(msg);
             } else {
-                session.write(msg);
+                session.write(msg.data);
 
             }
         }
