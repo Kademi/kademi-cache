@@ -77,9 +77,9 @@ public class TcpChannelHub implements Service {
         @Override
         public void messageReceived(IoSession session, Object message) throws Exception {
             Client c = (Client) session.getAttribute("client");
-            log.info("messageReceived: {} from client {}", message, c);
             byte[] data = (byte[]) message;
             Serializable msgObject = (Serializable) SerializationUtils.deserialize(data);
+            log.info("messageReceived: from client {} msgClass={}", c, msgObject.getClass());
             channelListener.handleNotification(null, msgObject);
         }
 

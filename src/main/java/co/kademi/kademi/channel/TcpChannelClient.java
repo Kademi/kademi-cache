@@ -284,8 +284,9 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
 //                session.write(new InvalidateItemMessage("cache1", "hello world"));
 //                Type t = new BigIntegerType();
 //                session.write(new InvalidateItemMessage("cache1", new CacheKey(1, t, "ddd", "ddd", null)));
-                Serializable data2 = (Serializable) SerializationUtils.clone(msg.data);
-                session.write(data2);
+//                Serializable data2 = (Serializable) SerializationUtils.clone(msg.data);
+                log.info("Transmite message");
+                session.write(msg.data);
 
             }
         }
