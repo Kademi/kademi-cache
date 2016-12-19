@@ -1,5 +1,6 @@
 package co.kademi.kademi.cache;
 
+import co.kademi.kademi.cache.channel.InvalidateAllMessage;
 import co.kademi.kademi.cache.channel.InvalidateItemMessage;
 import co.kademi.kademi.channel.Channel;
 import com.google.common.cache.Cache;
@@ -25,7 +26,7 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
     private final Channel channel;
     protected final Properties props;
     protected final CacheDataDescription cdd;
-    private final Cache<Object, Object> cache;
+    private final Cache<String, Object> cache;
     private final int timeout;
 
     public KademiCacheRegion(String name, Channel channel, Properties props, CacheDataDescription cdd) {
@@ -45,13 +46,23 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
         cache.invalidate(key);
     }
 
-    protected void invalidate(Serializable key) {
-        cache.invalidate(key);
+    protected void invalidate(Object key) {
+        String sKey = key.toString();
+        cache.invalidate(sKey);
         if (channel != null) {
-            InvalidateItemMessage m = new InvalidateItemMessage(cacheName, key);
+            InvalidateItemMessage m = new InvalidateItemMessage(cacheName, sKey);
             channel.sendNotification(m);
         }
     }
+
+    protected void invalidateAll() {
+        cache.invalidateAll();
+        if (channel != null) {
+            InvalidateAllMessage m = new InvalidateAllMessage(cacheName);
+            channel.sendNotification(m);
+        }
+    }
+
 
     @Override
     public String getName() {
@@ -99,8 +110,9 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
         return timeout;
     }
 
-    public Cache<Object, Object> getCache() {
+    public Cache<String, Object> getCache() {
         return cache;
     }
+
 
 }

@@ -11,14 +11,14 @@ import java.io.Serializable;
  */
 public class InvalidateItemMessage implements Serializable {
     private final String cacheName;
-    private final Serializable key;
+    private final String key;
 
     public InvalidateItemMessage() {
         this.cacheName = null;
         this.key = null;
     }
 
-    public InvalidateItemMessage(String cacheName, Serializable key) {
+    public InvalidateItemMessage(String cacheName, String key) {
         this.cacheName = cacheName;
         this.key = key;
     }

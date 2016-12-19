@@ -6,6 +6,7 @@ package co.kademi.kademi.cache;
 import java.io.Serializable;
 import java.util.Properties;
 import org.hibernate.cache.CacheException;
+import org.hibernate.cache.spi.CacheKey;
 import org.hibernate.cache.spi.EntityRegion;
 import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
 import org.hibernate.cache.spi.access.SoftLock;
@@ -36,7 +37,8 @@ public class KademiEntityRegionAccessStrategy implements EntityRegionAccessStrat
 
     @Override
     public boolean afterInsert(Object key, Object value, Object version) throws CacheException {
-        entityRegion.getCache().put(key, value);
+        CacheKey ck = (CacheKey) key;
+        entityRegion.getCache().put(ck.toString(), value);
         return true;
     }
 
@@ -48,26 +50,28 @@ public class KademiEntityRegionAccessStrategy implements EntityRegionAccessStrat
 
     @Override
     public boolean afterUpdate(Object key, Object value, Object currentVersion, Object previousVersion, SoftLock lock) throws CacheException {
-//        entityRegion.getCache().invalidate(key);
-        entityRegion.invalidate((Serializable) key);
+        entityRegion.invalidate(key);
         return true;
 
     }
 
     @Override
     public Object get(Object key, long txTimestamp) throws CacheException {
-        return entityRegion.getCache().getIfPresent(key);
+        CacheKey ck = (CacheKey) key;
+        return entityRegion.getCache().getIfPresent(ck.toString());
     }
 
     @Override
     public boolean putFromLoad(Object key, Object value, long txTimestamp, Object version) throws CacheException {
-        entityRegion.getCache().put(key, value);
+        CacheKey ck = (CacheKey) key;
+        entityRegion.getCache().put(ck.toString(), value);
         return true;
     }
 
     @Override
     public boolean putFromLoad(Object key, Object value, long txTimestamp, Object version, boolean minimalPutOverride) throws CacheException {
-        entityRegion.getCache().put(key, value);
+        CacheKey ck = (CacheKey) key;
+        entityRegion.getCache().put(ck.toString(), value);
         return true;
     }
 
@@ -93,7 +97,8 @@ public class KademiEntityRegionAccessStrategy implements EntityRegionAccessStrat
 
     @Override
     public void remove(Object key) throws CacheException {
-        entityRegion.getCache().invalidate(key);
+        entityRegion.invalidate(key);
+        entityRegion.getCache().invalidate(key.toString());
     }
 
     @Override
@@ -103,8 +108,9 @@ public class KademiEntityRegionAccessStrategy implements EntityRegionAccessStrat
 
     @Override
     public void evict(Object key) throws CacheException {
-        entityRegion.getCache().invalidate(key);
-        entityRegion.invalidate((Serializable) key); 
+        CacheKey ck = (CacheKey) key;
+        entityRegion.getCache().invalidate(ck.getKey());
+        entityRegion.invalidate(ck.getKey());
     }
 
     @Override

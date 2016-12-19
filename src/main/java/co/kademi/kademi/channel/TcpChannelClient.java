@@ -1,8 +1,5 @@
 package co.kademi.kademi.channel;
 
-import co.kademi.kademi.cache.channel.InvalidateItemMessage;
-import com.sun.org.apache.bcel.internal.generic.InstructionConstants;
-import com.sun.xml.internal.ws.developer.Serialization;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -16,11 +13,8 @@ import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.filter.codec.serialization.ObjectSerializationCodecFactory;
+import org.apache.mina.transport.socket.SocketSessionConfig;
 import org.apache.mina.transport.socket.nio.NioSocketConnector;
-import org.hibernate.cache.spi.CacheKey;
-import org.hibernate.type.AnyType;
-import org.hibernate.type.BigIntegerType;
-import org.hibernate.type.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -142,6 +136,8 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
             connector.getFilterChain().addLast("codec",
                     new ProtocolCodecFilter(new ObjectSerializationCodecFactory()));
             connector.setHandler(this);
+            SocketSessionConfig sessionConf = (SocketSessionConfig) connector.getSessionConfig();
+            sessionConf.setReuseAddress(true);
             InetSocketAddress add = new InetSocketAddress(hubAddress, hubPort);
             ConnectFuture future = connector.connect(add);
             if (future.await(5000)) {

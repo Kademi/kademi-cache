@@ -27,12 +27,13 @@ public class KademiTimestampsRegion extends KademiCacheRegion implements Timesta
 
     @Override
     public void put(Object key, Object value) throws CacheException {
-        getCache().put(key, value);
+        getCache().put(key.toString(), value);
     }
 
     @Override
     public void evict(Object key) throws CacheException {
-        getCache().invalidate(key);
+        invalidate(key);
+        getCache().invalidate(key.toString());
     }
 
     @Override

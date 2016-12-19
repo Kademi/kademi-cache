@@ -47,18 +47,18 @@ public class KademiCollectionRegion extends KademiCacheRegion implements Collect
 
         @Override
         public Object get(Object key, long txTimestamp) throws CacheException {
-            return getCache().getIfPresent(key);
+            return getCache().getIfPresent(key.toString());
         }
 
         @Override
         public boolean putFromLoad(Object key, Object value, long txTimestamp, Object version) throws CacheException {
-            getCache().put(key, value);
+            getCache().put(key.toString(), value);
             return true;
         }
 
         @Override
         public boolean putFromLoad(Object key, Object value, long txTimestamp, Object version, boolean minimalPutOverride) throws CacheException {
-            getCache().put(key, value);
+            getCache().put(key.toString(), value);
             return true;
         }
 
@@ -84,23 +84,22 @@ public class KademiCollectionRegion extends KademiCacheRegion implements Collect
 
         @Override
         public void remove(Object key) throws CacheException {
-            getCache().invalidate(key);
+            invalidate(key);
         }
 
         @Override
         public void removeAll() throws CacheException {
-            getCache().invalidateAll();
+            invalidateAll();
         }
 
         @Override
         public void evict(Object key) throws CacheException {
-            getCache().invalidate(key);
+            invalidate(key);
         }
 
         @Override
         public void evictAll() throws CacheException {
-            getCache().invalidateAll();
+            invalidateAll();
         }
-
     }
 }

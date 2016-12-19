@@ -7,6 +7,8 @@ import co.kademi.kademi.channel.Channel;
 import java.util.Properties;
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.spi.CacheDataDescription;
+import org.hibernate.cache.spi.CacheKey;
+import org.hibernate.cache.spi.QueryKey;
 import org.hibernate.cache.spi.QueryResultsRegion;
 
 /**
@@ -26,12 +28,13 @@ public class KademiQueryResultsRegion extends KademiCacheRegion implements Query
 
     @Override
     public void put(Object key, Object value) throws CacheException {
-        getCache().put(key, value);
+        getCache().put(key.toString(), value);
     }
 
     @Override
     public void evict(Object key) throws CacheException {
-        getCache().invalidate(key);
+        QueryKey ck = (QueryKey) key;
+        getCache().invalidate(ck);
     }
 
     @Override
