@@ -1,11 +1,15 @@
 package co.kademi.kademi.channel;
 
+import co.kademi.kademi.cache.channel.InvalidateItemMessage;
+import com.sun.org.apache.bcel.internal.generic.InstructionConstants;
+import com.sun.xml.internal.ws.developer.Serialization;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
+import org.apache.commons.lang.SerializationUtils;
 import org.apache.mina.core.future.ConnectFuture;
 import org.apache.mina.core.service.IoHandler;
 import org.apache.mina.core.session.IdleStatus;
@@ -13,6 +17,10 @@ import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.filter.codec.serialization.ObjectSerializationCodecFactory;
 import org.apache.mina.transport.socket.nio.NioSocketConnector;
+import org.hibernate.cache.spi.CacheKey;
+import org.hibernate.type.AnyType;
+import org.hibernate.type.BigIntegerType;
+import org.hibernate.type.Type;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -273,7 +281,11 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
                 log.warn("QueueSender: socket gone");
                 sendQueue.add(msg);
             } else {
-                session.write(msg.data);
+//                session.write(new InvalidateItemMessage("cache1", "hello world"));
+//                Type t = new BigIntegerType();
+//                session.write(new InvalidateItemMessage("cache1", new CacheKey(1, t, "ddd", "ddd", null)));
+                Serializable data2 = (Serializable) SerializationUtils.clone(msg.data);
+                session.write(data2);
 
             }
         }
