@@ -55,7 +55,7 @@ public class KademiRegionFactory implements RegionFactory {
                     }
                 } else if( msg instanceof InvalidateAllMessage) {
                     InvalidateAllMessage iam = (InvalidateAllMessage) msg;
-                    KademiCacheRegion r = mapOfRegions.get(iim.getCacheName());
+                    KademiCacheRegion r = mapOfRegions.get(iam.getCacheName());
                     if( r != null ) {
                         r.removeAll();
                     }
