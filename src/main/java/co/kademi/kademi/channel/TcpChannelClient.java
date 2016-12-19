@@ -6,6 +6,7 @@ import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
+import org.apache.commons.lang.SerializationUtils;
 import org.apache.mina.core.future.ConnectFuture;
 import org.apache.mina.core.service.IoHandler;
 import org.apache.mina.core.session.IdleStatus;
@@ -282,11 +283,11 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
     private class QueuedMessage {
 
         UUID dest;
-        Serializable data;
+        byte[] data;
 
         public QueuedMessage(UUID dest, Serializable data) {
             this.dest = dest;
-            this.data = data;
+            this.data = SerializationUtils.serialize(data);
         }
     }
 }

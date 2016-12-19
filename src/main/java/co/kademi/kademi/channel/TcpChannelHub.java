@@ -1,5 +1,6 @@
 package co.kademi.kademi.channel;
 
+import com.sun.xml.internal.ws.developer.Serialization;
 import java.io.IOException;
 import java.io.Serializable;
 import java.net.InetAddress;
@@ -12,6 +13,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
+import org.apache.commons.lang.SerializationUtils;
 import org.apache.mina.core.service.IoAcceptor;
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IoSession;
@@ -76,7 +78,9 @@ public class TcpChannelHub implements Service {
         public void messageReceived(IoSession session, Object message) throws Exception {
             Client c = (Client) session.getAttribute("client");
             log.info("messageReceived: {} from client {}", message, c);
-            channelListener.handleNotification(null, (Serializable) message);
+            byte[] data = (byte[]) message;
+            Serializable msgObject = (Serializable) SerializationUtils.deserialize(data);
+            channelListener.handleNotification(null, msgObject);
         }
 
         @Override
