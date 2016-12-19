@@ -1,5 +1,6 @@
 package co.kademi.kademi.cache;
 
+import co.kademi.kademi.cache.channel.InvalidateAllMessage;
 import co.kademi.kademi.cache.channel.InvalidateItemMessage;
 import co.kademi.kademi.channel.Channel;
 import co.kademi.kademi.channel.ChannelListener;
@@ -51,6 +52,12 @@ public class KademiRegionFactory implements RegionFactory {
                     KademiCacheRegion r = mapOfRegions.get(iim.getCacheName());
                     if( r != null ) {
                         r.remove(iim.getKey());
+                    }
+                } else if( msg instanceof InvalidateAllMessage) {
+                    InvalidateAllMessage iam = (InvalidateAllMessage) msg;
+                    KademiCacheRegion r = mapOfRegions.get(iim.getCacheName());
+                    if( r != null ) {
+                        r.removeAll();
                     }
                 }
             }

@@ -114,5 +114,9 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
         return cache;
     }
 
+    public void removeAll() {
+        cache.invalidateAll();
+    }
+
 
 }
