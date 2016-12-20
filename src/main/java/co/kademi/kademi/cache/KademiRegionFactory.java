@@ -6,6 +6,9 @@ import co.kademi.kademi.channel.Channel;
 import co.kademi.kademi.channel.ChannelListener;
 import java.io.Serializable;
 import java.net.InetAddress;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
@@ -30,6 +33,9 @@ import org.slf4j.LoggerFactory;
 public class KademiRegionFactory implements RegionFactory {
 
     private static final Logger log = LoggerFactory.getLogger(KademiRegionFactory.class);
+
+    private final List<BroadcastEventListener2> broadcastEventListeners = new ArrayList<>();
+
 
     private Properties props;
     private Channel channel;
@@ -59,6 +65,11 @@ public class KademiRegionFactory implements RegionFactory {
                     if( r != null ) {
                         r.removeAll();
                     }
+                } else if( msg instanceof BroadcastMessage) {
+                    BroadcastMessage m = (BroadcastMessage) msg;
+                    for( BroadcastEventListener2 l : broadcastEventListeners) {
+                        l.receive(l.topicName, m.key, m.value);
+                    }
                 }
             }
 
@@ -73,6 +84,12 @@ public class KademiRegionFactory implements RegionFactory {
             }
         });
     }
+
+    public Channel getChannel() {
+        return channel;
+    }
+
+
 
     @Override
     public void stop() {
@@ -127,6 +144,68 @@ public class KademiRegionFactory implements RegionFactory {
         KademiTimestampsRegion r = new KademiTimestampsRegion(regionName, channel, prprts);
         mapOfRegions.put(regionName, r);
         return r;
+    }
+
+    public Collection<KademiCacheRegion> getRegions() {
+        return this.mapOfRegions.values();
+    }
+
+    public void broadcast(String topicName, Object key, Object value) {
+        BroadcastMessage m = new BroadcastMessage(topicName, (Serializable) key, (Serializable) value);
+        channel.sendNotification(m);
+    }
+
+    public void registerBroadcastListener(String topicName, BroadcastEventListener l) {
+        BroadcastEventListener2 l2 = new BroadcastEventListener2(topicName, l);
+        broadcastEventListeners.add(l2);
+    }
+
+    private class BroadcastEventListener2{
+        private final String topicName;
+        private final BroadcastEventListener listener;
+
+        public BroadcastEventListener2(String topicName, BroadcastEventListener listener) {
+            this.topicName = topicName;
+            this.listener = listener;
+        }
+
+        void receive(String topicName, Serializable key, Serializable value) {
+            if( topicName.equals(this.topicName)) {
+                listener.receive(key, value);
+            }
+        }
+
+    }
+
+
+    public static interface BroadcastEventListener {
+
+        void receive(Serializable key, Serializable value);
+
+    }
+
+    public static class BroadcastMessage implements Serializable {
+        private final String topicName;
+        private final Serializable key;
+        private final Serializable value;
+
+        public BroadcastMessage(String topicName,Serializable key, Serializable value) {
+            this.topicName = topicName;
+            this.key = key;
+            this.value = value;
+        }
+
+        public String getTopicName() {
+            return topicName;
+        }
+
+        public Serializable getKey() {
+            return key;
+        }
+
+        public Serializable getValue() {
+            return value;
+        }
     }
 
 }
