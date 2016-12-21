@@ -172,6 +172,7 @@ public class S3FileListService implements FileListService {
 
         for (String key : list) {
             try {
+                log.info("addFileList: item={}", key);
                 s3.putObject(bucketName, key, new ByteArrayInputStream(ENTRY_CONTENT), ENTRY_METADATA);
             } catch (AmazonClientException e) {
                 throw new RuntimeException("Failed to put entry [bucketName=" + bucketName+ ", entry=" + key + ']', e);
