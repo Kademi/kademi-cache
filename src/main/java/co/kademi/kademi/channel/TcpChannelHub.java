@@ -18,6 +18,7 @@ import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IoSession;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.filter.codec.serialization.ObjectSerializationCodecFactory;
+import org.apache.mina.transport.socket.SocketSessionConfig;
 import org.apache.mina.transport.socket.nio.NioSocketAcceptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,6 +59,9 @@ public class TcpChannelHub implements Service {
         sendQueue = new LinkedBlockingQueue();
         try {
             acceptor = new NioSocketAcceptor();
+            SocketSessionConfig sessionConf = (SocketSessionConfig) acceptor.getSessionConfig();
+            sessionConf.setReuseAddress(true);
+            
             acceptor.getFilterChain().addLast("protocol", new ProtocolCodecFilter(new ObjectSerializationCodecFactory()));
             acceptor.getSessionConfig().setReadBufferSize(2048 * 8);
             acceptor.setHandler(new ChannelServerHandler());
