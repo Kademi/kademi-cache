@@ -88,11 +88,11 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
 //        log.debug( "sendNotification: " + msg.getClass() + " queue: " + sendQueue.size() );
         sendQueue.add(new QueuedMessage(null, msg));
     }
-
-    public void sendNotification(UUID destination, Serializable msg) {
-//        log.debug( "sendNotification2: " + msg.getClass() + " queue: " + sendQueue.size() );
-        sendQueue.add(new QueuedMessage(destination, msg));
-    }
+//
+//    public void sendNotification(UUID destination, Serializable msg) {
+////        log.debug( "sendNotification2: " + msg.getClass() + " queue: " + sendQueue.size() );
+//        sendQueue.add(new QueuedMessage(destination, msg));
+//    }
 
     public void registerListener(ChannelListener channelListener) {
         channelListeners.add(channelListener);
