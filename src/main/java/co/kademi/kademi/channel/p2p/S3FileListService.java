@@ -60,14 +60,16 @@ public class S3FileListService implements FileListService {
 
     @Override
     public List<String> getFileList() {
+        log.info("getFileList bucket={}", bucketName);
         initClient();
 
         List<String> addrs = new LinkedList<>();
 
         try {
-            ObjectListing list = s3.listObjects(bucketName);
-            boolean truncated = list.isTruncated();
+            ObjectListing list = s3.listObjects(bucketName);            
+            boolean truncated = list.isTruncated();            
             do {
+                log.info("getFileList: file list response num items={} truncated={}", list.getObjectSummaries().size(), truncated);
                 for (S3ObjectSummary sum : list.getObjectSummaries()) {
                     String key = sum.getKey();
                     addrs.add(key);
