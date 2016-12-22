@@ -244,6 +244,8 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
                                 onLostConnection.run();
                             }
                         }
+                    } else {
+                        log.info("still connected");
                     }
                     if (running) {
                         Thread.sleep(1000);
@@ -281,7 +283,7 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
 //                Type t = new BigIntegerType();
 //                session.write(new InvalidateItemMessage("cache1", new CacheKey(1, t, "ddd", "ddd", null)));
 //                Serializable data2 = (Serializable) SerializationUtils.clone(msg.data);
-                log.info("Transmite message");
+                log.info("Transmit message to: {}", session.getRemoteAddress());
                 session.write(msg.data);
 
             }
