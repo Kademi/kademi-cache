@@ -60,8 +60,8 @@ public class TcpChannelHub implements Service {
         try {
             acceptor = new NioSocketAcceptor();
             SocketSessionConfig sessionConf = (SocketSessionConfig) acceptor.getSessionConfig();
-            sessionConf.setReuseAddress(true);
-            
+//            sessionConf.setReuseAddress(true);
+
             acceptor.getFilterChain().addLast("protocol", new ProtocolCodecFilter(new ObjectSerializationCodecFactory()));
             acceptor.getSessionConfig().setReadBufferSize(2048 * 8);
             acceptor.setHandler(new ChannelServerHandler());
