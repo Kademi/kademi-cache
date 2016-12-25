@@ -22,7 +22,7 @@ public class KademiTimestampsRegion extends KademiCacheRegion implements Timesta
 
     @Override
     public Object get(Object key) throws CacheException {
-        return getCache().getIfPresent(key);
+        return getCache().getIfPresent(key.toString());
     }
 
     @Override

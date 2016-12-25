@@ -23,7 +23,7 @@ public class KademiQueryResultsRegion extends KademiCacheRegion implements Query
 
     @Override
     public Object get(Object key) throws CacheException {
-        return getCache().getIfPresent(key);
+        return getCache().getIfPresent(key.toString());
     }
 
     @Override
@@ -34,7 +34,7 @@ public class KademiQueryResultsRegion extends KademiCacheRegion implements Query
     @Override
     public void evict(Object key) throws CacheException {
         QueryKey ck = (QueryKey) key;
-        getCache().invalidate(ck);
+        getCache().invalidate(ck.toString());
     }
 
     @Override

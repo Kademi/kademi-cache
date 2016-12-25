@@ -110,7 +110,7 @@ public class KademiEntityRegionAccessStrategy implements EntityRegionAccessStrat
     public void evict(Object key) throws CacheException {
         CacheKey ck = (CacheKey) key;
         entityRegion.getCache().invalidate(ck.getKey());
-        entityRegion.invalidate(ck.getKey());
+        entityRegion.invalidate(ck);
     }
 
     @Override
