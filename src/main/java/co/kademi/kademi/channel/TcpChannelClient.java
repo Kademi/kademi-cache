@@ -245,7 +245,7 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
                             }
                         }
                     } else {
-                        log.info("still connected");
+                        log.trace("still connected to {}:{}", hubAddress, hubPort);
                     }
                     if (running) {
                         Thread.sleep(1000);
