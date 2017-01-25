@@ -11,6 +11,7 @@ import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Scanner;
 import java.util.UUID;
+import org.apache.commons.lang.StringUtils;
 
 /**
  *
@@ -21,7 +22,16 @@ public class LocalChannelRunner {
     public static void main(String[] args) throws UnknownHostException, SocketException, InterruptedException {
         DirectoryFileListService fileListService = new DirectoryFileListService();
         FileListP2PMemberDiscoveryService disco = new FileListP2PMemberDiscoveryService(fileListService);
-        int i = (int) (Math.random() * 100) + 9000;
+
+        Scanner scanner = new Scanner(System.in);
+        
+        System.out.println("Enter a port number");
+        String d = scanner.next();
+        int i = 9000;
+        if( StringUtils.isNotBlank(d)) {
+           i = Integer.parseInt(d);            
+        }
+        
         P2PTcpChannel ch1 = new P2PTcpChannel("chan", i, disco, "127.0");
         ch1.registerListener(new ChannelListener() {
 
@@ -42,13 +52,12 @@ public class LocalChannelRunner {
         });
         ch1.start();
 
-        while (true) {
-            Scanner scanner = new Scanner(System.in);
+        while (true) {            
             System.out.println("Enter a key to send");
-            String d = scanner.next();
+            d = scanner.next();
 
             long tm = System.currentTimeMillis();
-            for (int count = 0; count < 100; count++) {
+            for (int count = 0; count < 1; count++) {
                 ch1.sendNotification(new InvalidateItemMessage("cache1", d + "-" + count));
             }
             tm = System.currentTimeMillis() - tm;

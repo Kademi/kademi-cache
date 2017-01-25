@@ -125,7 +125,7 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
     }
 
     private synchronized boolean isConnected() {
-        return session != null;
+        return session != null && session.isConnected() && session.getRemoteAddress() != null;
     }
 
     private synchronized void connect() {
