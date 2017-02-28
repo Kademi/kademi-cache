@@ -24,8 +24,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * A hub receives messages from multiple clients. It never sends to clients,
- * and it never connects to clients.
+ * A hub receives messages from multiple clients. It never sends to clients, and
+ * it never connects to clients.
  *
  * When a message is received it is passed on to the channel listeners
  *
@@ -35,7 +35,7 @@ public class TcpChannelHub implements Service {
 
     private static final Logger log = LoggerFactory.getLogger(TcpChannelHub.class);
     private final InetAddress bindAddress;
-    private final int port;
+    private int port;
     private final List<Client> clients;
     private final ChannelListener channelListener;
     private boolean started;
@@ -57,22 +57,27 @@ public class TcpChannelHub implements Service {
         started = true;
 
         sendQueue = new LinkedBlockingQueue();
-        try {
-            acceptor = new NioSocketAcceptor();
-            SocketSessionConfig sessionConf = (SocketSessionConfig) acceptor.getSessionConfig();
-//            sessionConf.setReuseAddress(true);
 
-            acceptor.getFilterChain().addLast("protocol", new ProtocolCodecFilter(new ObjectSerializationCodecFactory()));
-            acceptor.getSessionConfig().setReadBufferSize(2048 * 8);
-            acceptor.setHandler(new ChannelServerHandler());
+        acceptor = new NioSocketAcceptor();
+        SocketSessionConfig sessionConf = (SocketSessionConfig) acceptor.getSessionConfig();
+        sessionConf.setReuseAddress(true);
+
+        acceptor.getFilterChain().addLast("protocol", new ProtocolCodecFilter(new ObjectSerializationCodecFactory()));
+        acceptor.getSessionConfig().setReadBufferSize(2048 * 8);
+        acceptor.setHandler(new ChannelServerHandler());
+        for (int i = 0; i < 10; i++) {
             InetSocketAddress add = new InetSocketAddress(bindAddress, port);
-            acceptor.bind(add);
-
-        } catch (UnknownHostException ex) {
-            throw new RuntimeException(ex);
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
+            try {
+                log.info("Attempt to start server on port {}", port);
+                acceptor.bind(add);
+                log.info("Server running on port {}", port);
+                break;
+            } catch (IOException ex) {
+                log.warn("Could not bind on port " + port + " because " + ex.getMessage());
+                port++;
+            }
         }
+
     }
 
     private class ChannelServerHandler extends IoHandlerAdapter {
