@@ -5,6 +5,7 @@ package co.kademi.kademi.channel.p2p;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.slf4j.LoggerFactory;
 
@@ -19,6 +20,8 @@ public class DirectoryFileListService implements FileListService {
 
     private final File dir;
 
+    private List<String> fixed = Arrays.asList("10.94.48.70#47100");
+
     public DirectoryFileListService() {
         File tmp = new File(System.getProperty("java.io.tmpdir"));
         this.dir = new File(tmp, "filelist");
@@ -32,6 +35,9 @@ public class DirectoryFileListService implements FileListService {
     @Override
     public List<String> getFileList() {
         List<String> list = new ArrayList<>();
+        if (fixed != null) {
+            list.addAll(fixed);
+        }
         if (dir.listFiles() != null) {
             for (File f : dir.listFiles()) {
                 list.add(f.getName());
@@ -57,7 +63,7 @@ public class DirectoryFileListService implements FileListService {
         for (String key : list) {
             File newDir = new File(dir, key);
             if (newDir.exists()) {
-                if (!newDir.delete() ) {
+                if (!newDir.delete()) {
                     throw new RuntimeException("Couldnt delete: " + newDir.getAbsolutePath());
                 }
             }
@@ -68,12 +74,20 @@ public class DirectoryFileListService implements FileListService {
     public void clear() {
         if (dir.listFiles() != null) {
             for (File f : dir.listFiles()) {
-                if( !f.delete() ) {
+                if (!f.delete()) {
                     throw new RuntimeException("Could not delete: " + f.getAbsolutePath());
                 }
             }
         }
 
+    }
+
+    public List<String> getFixed() {
+        return fixed;
+    }
+
+    public void setFixed(List<String> fixed) {
+        this.fixed = fixed;
     }
 
 }
