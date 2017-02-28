@@ -34,9 +34,7 @@ import org.slf4j.LoggerFactory;
 public final class P2PTcpChannel implements Channel {
 
     private static final Logger log = LoggerFactory.getLogger(P2PTcpChannel.class);
-
-
-
+    
     private final String name;
     private final TcpChannelHub server;
     private final List<TcpChannelClient> clients;
@@ -207,4 +205,5 @@ public final class P2PTcpChannel implements Channel {
         }
     }
 
+    
 }
