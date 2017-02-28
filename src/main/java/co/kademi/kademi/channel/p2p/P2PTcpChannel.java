@@ -51,7 +51,7 @@ public final class P2PTcpChannel implements Channel {
 
             @Override
             public void handleNotification(UUID sourceId, Serializable msg) {
-                log.info("handleNotification: source={} receiver={} msg class={}", sourceId, server.getBindAddress(), msg.getClass());
+                //log.info("handleNotification: source={} receiver={} msg class={}", sourceId, server.getBindAddress(), msg.getClass());
                 for (ChannelListener l : channelListeners) {
                     l.handleNotification(sourceId, msg);
                 }

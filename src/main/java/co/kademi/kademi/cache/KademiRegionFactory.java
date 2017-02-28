@@ -52,12 +52,15 @@ public class KademiRegionFactory implements RegionFactory {
 
             @Override
             public void handleNotification(UUID sourceId, Serializable msg) {
+                System.out.println("xxx");
                 if( msg instanceof InvalidateItemMessage) {
                     InvalidateItemMessage iim = (InvalidateItemMessage) msg;
                     //lookup cache, and remove item. do not call invalidate otherwise will recur
                     KademiCacheRegion r = mapOfRegions.get(iim.getCacheName());
                     if( r != null ) {
                         r.remove(iim.getKey());
+                    } else {
+                        log.warn("---- CACHE NOT FOUND " + iim.getCacheName() + " -----");
                     }
                 } else if( msg instanceof InvalidateAllMessage) {
                     InvalidateAllMessage iam = (InvalidateAllMessage) msg;

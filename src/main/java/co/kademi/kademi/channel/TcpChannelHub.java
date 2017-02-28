@@ -82,7 +82,7 @@ public class TcpChannelHub implements Service {
             Client c = (Client) session.getAttribute("client");
             byte[] data = (byte[]) message;
             Serializable msgObject = (Serializable) SerializationUtils.deserialize(data);
-            log.info("messageReceived: from client {} msgClass={}", c, msgObject.getClass());
+            //log.info("messageReceived: from client {} msgClass={}", c, msgObject.getClass());
             channelListener.handleNotification(null, msgObject);
         }
 
