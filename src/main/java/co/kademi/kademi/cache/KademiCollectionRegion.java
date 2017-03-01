@@ -47,7 +47,8 @@ public class KademiCollectionRegion extends KademiCacheRegion implements Collect
 
         @Override
         public Object get(Object key, long txTimestamp) throws CacheException {
-            return getCache().getIfPresent(key.toString());
+            Object o = getCache().getIfPresent(key.toString());
+            return o;
         }
 
         @Override

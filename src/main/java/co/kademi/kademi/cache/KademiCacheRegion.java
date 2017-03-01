@@ -43,7 +43,8 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
     }
 
     public void remove(Serializable key) {
-        cache.invalidate(key);
+        String sKey = key.toString();
+        cache.invalidate(sKey);
     }
 
     protected void invalidate(Object key) {

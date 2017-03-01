@@ -20,7 +20,7 @@ public class DirectoryFileListService implements FileListService {
 
     private final File dir;
 
-    private List<String> fixed = Arrays.asList("10.94.48.70#47100");
+    private List<String> fixed = null; //Arrays.asList("10.20.30.41#47100");
 
     public DirectoryFileListService() {
         File tmp = new File(System.getProperty("java.io.tmpdir"));
