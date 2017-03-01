@@ -52,7 +52,6 @@ public class KademiRegionFactory implements RegionFactory {
 
             @Override
             public void handleNotification(UUID sourceId, Serializable msg) {
-                System.out.println("xxx");
                 if( msg instanceof InvalidateItemMessage) {
                     InvalidateItemMessage iim = (InvalidateItemMessage) msg;
                     //lookup cache, and remove item. do not call invalidate otherwise will recur
@@ -130,6 +129,13 @@ public class KademiRegionFactory implements RegionFactory {
 
     @Override
     public CollectionRegion buildCollectionRegion(String regionName, Properties prprts, CacheDataDescription cdd) throws CacheException {
+        if( mapOfRegions.containsKey(regionName)) {
+//            throw new CacheException("Duplicate cache region");
+            log.info("buildCollectionRegion: return existing cache region: {}", regionName);
+            return (CollectionRegion) mapOfRegions.get(regionName);
+        } else {
+            log.info("buildCollectionRegion: create new cache region {}", regionName);
+        }
         KademiCollectionRegion r = new KademiCollectionRegion(regionName, channel, prprts, cdd);
         mapOfRegions.put(regionName, r);
         return r;
