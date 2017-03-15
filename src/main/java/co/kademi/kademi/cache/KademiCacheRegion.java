@@ -36,7 +36,7 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
         this.cdd = cdd;
         cache = CacheBuilder.newBuilder()
                 .maximumSize(1000)
-                .expireAfterWrite(10, TimeUnit.MINUTES)
+                .expireAfterWrite(5, TimeUnit.MINUTES)
                 .build();
         timeout = 600; // not sure of units
 
