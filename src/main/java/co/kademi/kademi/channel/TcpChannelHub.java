@@ -73,7 +73,7 @@ public class TcpChannelHub implements Service {
                 log.info("Server running on port {}", port);
                 break;
             } catch (IOException ex) {
-                log.warn("Could not bind on port " + port + " because " + ex.getMessage());
+                log.warn("Could not bind on port " + port + " because " + ex.getMessage() + ", attempt " + i + " of 10");
                 port++;
             }
         }
