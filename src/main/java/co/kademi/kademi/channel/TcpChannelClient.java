@@ -63,7 +63,7 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
     }
 
     public void start() {
-        log.warn("start: " + this.getClass().getCanonicalName());
+        log.warn("start: address={} port={}" + this.hubAddress, hubPort);
         running = true;
 
         thSender = new Thread(new QueueSender(), "TcpChannelClientSender");
