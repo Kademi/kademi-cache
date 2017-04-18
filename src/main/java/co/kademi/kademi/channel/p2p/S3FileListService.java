@@ -145,6 +145,10 @@ public class S3FileListService implements FileListService {
         this.bucketName = bucketName;
     }
 
+    public void setRegionId(String regionId) {
+        this.regionId = regionId;
+    }
+
     /**
      * Sets AWS credentials.
      * <p>

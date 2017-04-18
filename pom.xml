@@ -6,11 +6,11 @@
     <version>1.0.7</version>
     <packaging>jar</packaging>
     <distributionManagement>
-		<repository>
-			<id>bintray-kademi-Kademi</id>
+        <repository>
+            <id>bintray-kademi-Kademi</id>
             <name>bintray-kademi-Kademi</name>
-			<url>https://api.bintray.com/maven/kademi/kademi-cache/kademi-cache/;publish=1</url>
-		</repository>
+            <url>https://api.bintray.com/maven/kademi/kademi-cache/kademi-cache/;publish=1</url>
+        </repository>
     </distributionManagement>
     <dependencies>
         <dependency>
