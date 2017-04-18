@@ -5,14 +5,14 @@ package co.kademi.kademi.channel.p2p;
 
 import com.amazonaws.AmazonClientException;
 import com.amazonaws.ClientConfiguration;
-import com.amazonaws.auth.AWSCredentials;
+import com.amazonaws.auth.AWSCredentialsProvider;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import java.io.ByteArrayInputStream;
-import java.net.InetSocketAddress;
 import java.util.LinkedList;
 import java.util.List;
 import org.apache.commons.lang.StringUtils;
@@ -52,10 +52,11 @@ public class S3FileListService implements FileListService {
      * Config Properties
      */
     private String bucketName;
-    private AWSCredentials cred;
+    private AWSCredentialsProvider cred;
     private ClientConfiguration cfg;
 
     private AmazonS3 s3;
+    private String regionId;
     private boolean initFinished = false;
 
     @Override
@@ -66,8 +67,8 @@ public class S3FileListService implements FileListService {
         List<String> addrs = new LinkedList<>();
 
         try {
-            ObjectListing list = s3.listObjects(bucketName);            
-            boolean truncated = list.isTruncated();            
+            ObjectListing list = s3.listObjects(bucketName);
+            boolean truncated = list.isTruncated();
             do {
                 log.info("getFileList: file list response num items={} truncated={}", list.getObjectSummaries().size(), truncated);
                 for (S3ObjectSummary sum : list.getObjectSummaries()) {
@@ -97,7 +98,24 @@ public class S3FileListService implements FileListService {
                 throw new RuntimeException("Bucket name is null or empty (provide bucket name and restart).");
             }
 
-            s3 = cfg != null ? new AmazonS3Client(cred, cfg) : new AmazonS3Client(cred);
+            Regions region = null;
+            if (StringUtils.isNotBlank(regionId)) {
+                region = Regions.fromName(regionId);
+            }
+            if (region == null) {
+                region = Regions.DEFAULT_REGION;
+            }
+
+            AmazonS3ClientBuilder builder = AmazonS3ClientBuilder
+                    .standard()
+                    .withCredentials(cred)
+                    .withRegion(region);
+
+            if (cfg != null) {
+                builder.setClientConfiguration(cfg);
+            }
+
+            s3 = builder.build();
 
             if (!s3.doesBucketExist(bucketName)) {
                 try {
@@ -134,7 +152,7 @@ public class S3FileListService implements FileListService {
      *
      * @param cred AWS credentials.
      */
-    public void setAwsCredentials(AWSCredentials cred) {
+    public void setAwsCredentials(AWSCredentialsProvider cred) {
         this.cred = cred;
     }
 
@@ -175,7 +193,7 @@ public class S3FileListService implements FileListService {
                 log.info("addFileList: item={}", key);
                 s3.putObject(bucketName, key, new ByteArrayInputStream(ENTRY_CONTENT), ENTRY_METADATA);
             } catch (AmazonClientException e) {
-                throw new RuntimeException("Failed to put entry [bucketName=" + bucketName+ ", entry=" + key + ']', e);
+                throw new RuntimeException("Failed to put entry [bucketName=" + bucketName + ", entry=" + key + ']', e);
             }
         }
     }
@@ -188,7 +206,7 @@ public class S3FileListService implements FileListService {
             try {
                 s3.deleteObject(bucketName, key);
             } catch (AmazonClientException e) {
-                throw new RuntimeException("Failed to delete entry [bucketName=" + bucketName+ ", entry=" + key + ']', e);
+                throw new RuntimeException("Failed to delete entry [bucketName=" + bucketName + ", entry=" + key + ']', e);
             }
         }
     }
