@@ -40,6 +40,7 @@ public class FileListP2PMemberDiscoveryService implements P2PMemberDiscoveryServ
 
     @Override
     public void registerAddresses(Collection<InetSocketAddress> addrs) {
+        log.info("registerAddresses: items={}", addrs.size());
         List<String> list = new ArrayList<>();
         for (InetSocketAddress add : addrs) {
             String key = format(add);

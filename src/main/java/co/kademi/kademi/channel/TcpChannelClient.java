@@ -44,6 +44,7 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
     private LinkedBlockingQueue<QueuedMessage> sendQueue = new LinkedBlockingQueue<>();
     private NioSocketConnector connector;
     private IoSession session;
+    private Long lastMessageTime;
 
     private int connectFailedCount;
 
@@ -191,7 +192,14 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
 
     @Override
     public String toString() {
-        return "server=" + this.hubAddress + ":" + hubPort;
+
+        String s = "server=" + this.hubAddress + ":" + hubPort + "send-queue-size=" + this.sendQueue.size()
+                + " connectFailedCount=" + connectFailedCount;
+        if (lastMessageTime != null) {
+            long tm = System.currentTimeMillis() - lastMessageTime;
+            s += " last message sent: " + tm + "ms ago";
+        }
+        return s;
     }
 
     @Override
@@ -285,6 +293,7 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
 //                Serializable data2 = (Serializable) SerializationUtils.clone(msg.data);
                 log.info("Transmit message to: {}", session.getRemoteAddress());
                 session.write(msg.data);
+                lastMessageTime = System.currentTimeMillis();
 
             }
         }

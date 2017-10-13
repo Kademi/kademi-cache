@@ -72,12 +72,14 @@ public final class P2PTcpChannel implements Channel {
     }
 
     public void start() {
+        log.info("channel-start");
         server.start();
 
         InetAddress host = server.getBindAddress();
         InetSocketAddress myAddress = new InetSocketAddress(host, server.getPort());
 
         // Add me
+        log.info("channel-start: register my address={}", myAddress);
         discoveryService.registerAddresses(Arrays.asList(myAddress));
 
         connectToServers();
@@ -86,6 +88,11 @@ public final class P2PTcpChannel implements Channel {
     public void connectToServers() {
         InetAddress host = server.getBindAddress();
         InetSocketAddress myAddress = new InetSocketAddress(host, server.getPort());
+        
+        // Add me to make sure is available to other servers
+        log.info("channel-start: register my address={}", myAddress);
+        discoveryService.registerAddresses(Arrays.asList(myAddress));
+        
         log.info("Check for connections to servers. My address={}", myAddress);
         Collection<InetSocketAddress> peerAddresses = discoveryService.getRegisteredAddresses();
         log.info("Connect to {} peers", peerAddresses.size());
@@ -210,6 +217,7 @@ public final class P2PTcpChannel implements Channel {
         return discoveryService;
     }
 
-    
-    
+    public TcpChannelHub getServer() {
+        return server;
+    }
 }

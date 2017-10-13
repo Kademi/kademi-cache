@@ -85,6 +85,9 @@ public class TcpChannelHub implements Service {
         @Override
         public void messageReceived(IoSession session, Object message) throws Exception {
             Client c = (Client) session.getAttribute("client");
+            if( c != null ) {
+                c.lastMessageTime = System.currentTimeMillis();
+            }
             byte[] data = (byte[]) message;
             Serializable msgObject = (Serializable) SerializationUtils.deserialize(data);
             //log.info("messageReceived: from client {} msgClass={}", c, msgObject.getClass());
@@ -141,6 +144,7 @@ public class TcpChannelHub implements Service {
         private final UUID id;
         private final IoSession session;
         private boolean stopped;
+        private Long lastMessageTime;
 
         public Client(IoSession session) throws IOException {
             this.id = UUID.randomUUID();
@@ -150,6 +154,7 @@ public class TcpChannelHub implements Service {
         }
 
         public boolean onData(Serializable message) throws IOException, BufferUnderflowException, ClosedChannelException {
+            this.lastMessageTime = System.currentTimeMillis();
             if (stopped) {
                 log.info("discarding message because state is stopped");
                 return true;
@@ -175,7 +180,12 @@ public class TcpChannelHub implements Service {
 
         @Override
         public String toString() {
-            return "Client: " + session.getRemoteAddress();
+            String s = "Client: " + session.getRemoteAddress();
+            if( lastMessageTime != null ) {
+                long tm = System.currentTimeMillis() - lastMessageTime;
+                s += " last message=" + tm + "ms ago";
+            }
+            return s;
         }
     }
 }

@@ -190,6 +190,7 @@ public class S3FileListService implements FileListService {
 
     @Override
     public void addFileList(List<String> list) {
+        log.info("addFileList: items={}", list.size());
         initClient();
 
         for (String key : list) {
@@ -204,10 +205,12 @@ public class S3FileListService implements FileListService {
 
     @Override
     public void removeFileList(List<String> list) {
+        log.info("removeFileList: items={}", list.size());
         initClient();
 
         for (String key : list) {
             try {
+                log.info("removeFileList: item={}", key);
                 s3.deleteObject(bucketName, key);
             } catch (AmazonClientException e) {
                 throw new RuntimeException("Failed to delete entry [bucketName=" + bucketName + ", entry=" + key + ']', e);
