@@ -83,7 +83,7 @@ public final class P2PTcpChannel implements Channel {
         connectToServers();
     }
 
-    private void connectToServers() {
+    public void connectToServers() {
         InetAddress host = server.getBindAddress();
         InetSocketAddress myAddress = new InetSocketAddress(host, server.getPort());
         log.info("Check for connections to servers. My address={}", myAddress);
@@ -92,6 +92,7 @@ public final class P2PTcpChannel implements Channel {
         for (InetSocketAddress peerAddress : peerAddresses) {
             if (!peerAddress.equals(myAddress)) {
                 if( !hasClient(peerAddress)) {
+                    log.info("Not connected to {}, attempt to connect..", peerAddress);
                     connectToServer(peerAddress);
                 } else {
                     log.info(".. already connected to {}", peerAddress);
@@ -205,5 +206,10 @@ public final class P2PTcpChannel implements Channel {
         }
     }
 
+    public P2PMemberDiscoveryService getDiscoveryService() {
+        return discoveryService;
+    }
+
+    
     
 }
