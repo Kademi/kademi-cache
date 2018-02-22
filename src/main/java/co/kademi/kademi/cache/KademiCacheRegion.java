@@ -34,9 +34,12 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
         this.channel = channel;
         this.props = props;
         this.cdd = cdd;
+
+        int ttlMins = Integer.parseInt(props.getProperty("hibernate.cache.ttl_mins", "5"));
+
         cache = CacheBuilder.newBuilder()
                 .maximumSize(1000)
-                .expireAfterWrite(5, TimeUnit.MINUTES)
+                .expireAfterWrite(ttlMins, TimeUnit.MINUTES)
                 .build();
         timeout = 600; // not sure of units
 
