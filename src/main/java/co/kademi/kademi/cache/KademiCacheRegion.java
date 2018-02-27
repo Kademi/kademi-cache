@@ -27,7 +27,9 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
     protected final Properties props;
     protected final CacheDataDescription cdd;
     private final Cache<String, Object> cache;
+    private final int ttlMins;
     private final int timeout;
+    private final int maxSize;
 
     public KademiCacheRegion(String name, Channel channel, Properties props, CacheDataDescription cdd) {
         this.cacheName = name;
@@ -35,10 +37,17 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
         this.props = props;
         this.cdd = cdd;
 
-        int ttlMins = Integer.parseInt(props.getProperty("hibernate.cache.ttl_mins", "5"));
+        ttlMins = Integer.parseInt(props.getProperty("hibernate.cache.ttl_mins", "5"));
+
+        int i = Integer.parseInt(props.getProperty("hibernate.cache.max_size", "1000"));
+        String k = "hibernate.cache." + name + ".max_size";
+        if( props.containsKey(k)) {
+            i = Integer.parseInt(props.getProperty(k));
+        }
+        this.maxSize = i;
 
         cache = CacheBuilder.newBuilder()
-                .maximumSize(1000)
+                .maximumSize(maxSize)
                 .expireAfterWrite(ttlMins, TimeUnit.MINUTES)
                 .build();
         timeout = 600; // not sure of units
@@ -121,6 +130,16 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
     public void removeAll() {
         cache.invalidateAll();
     }
+
+    public int getTtlMins() {
+        return ttlMins;
+    }
+
+    public int getMaxSize() {
+        return maxSize;
+    }
+
+
 
 
 }
