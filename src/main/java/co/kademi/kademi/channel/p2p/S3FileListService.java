@@ -91,11 +91,11 @@ public class S3FileListService implements FileListService {
             initFinished = true;
 
             if (cred == null) {
-                throw new RuntimeException("AWS credentials are not set.");
+                throw new RuntimeException("S3-initClient: AWS credentials are not set.");
             }
 
             if (StringUtils.isBlank(bucketName)) {
-                throw new RuntimeException("Bucket name is null or empty (provide bucket name and restart).");
+                throw new RuntimeException("S3-initClient: Bucket name is null or empty (provide bucket name and restart).");
             }
 
             Regions region = null;
@@ -115,7 +115,12 @@ public class S3FileListService implements FileListService {
                 builder.setClientConfiguration(cfg);
             }
 
-            s3 = builder.build();
+            try {
+                s3 = builder.build();
+            } catch (Exception e) {                
+                log.error("initClient: Exception. Region={}" + region + " Cred=" + cred + " Bucket=" + bucketName + " RegionID=" + regionId, e);
+                return ;
+            }
 
             if (!s3.doesBucketExist(bucketName)) {
                 try {
@@ -192,13 +197,22 @@ public class S3FileListService implements FileListService {
     public void addFileList(List<String> list) {
         log.info("addFileList: items={}", list.size());
         initClient();
+        
+        if( s3 == null ) {
+            log.warn("addFileList: Cant set file list becasue dont have an s3 client");
+            return ;
+        }
 
         for (String key : list) {
-            try {
-                log.info("addFileList: item={}", key);
-                s3.putObject(bucketName, key, new ByteArrayInputStream(ENTRY_CONTENT), ENTRY_METADATA);
-            } catch (AmazonClientException e) {
-                throw new RuntimeException("Failed to put entry [bucketName=" + bucketName + ", entry=" + key + ']', e);
+            if (StringUtils.isNotBlank(key)) {
+                try {
+                    log.info("addFileList: item={}", key);
+                    s3.putObject(bucketName, key, new ByteArrayInputStream(ENTRY_CONTENT), ENTRY_METADATA);
+                } catch (AmazonClientException e) {
+                    throw new RuntimeException("addFileList: Failed to put entry [bucketName=" + bucketName + ", entry=" + key + ']', e);
+                }
+            } else {
+                log.warn("addFileList: Ignoring null or empty key in list of size {}", list.size());
             }
         }
     }
