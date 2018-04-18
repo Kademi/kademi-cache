@@ -112,6 +112,12 @@ public class TcpChannelHub implements Service {
 
         }
 
+        @Override
+        public void exceptionCaught(IoSession session, Throwable cause) throws Exception {
+            log.error("Exception in TCP channel", cause);
+        }
+
+        
     }
 
     public void stop() {
