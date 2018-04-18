@@ -66,21 +66,25 @@ public class S3FileListService implements FileListService {
 
         List<String> addrs = new LinkedList<>();
 
-        try {
-            ObjectListing list = s3.listObjects(bucketName);
-            boolean truncated = list.isTruncated();
-            do {
-                log.info("getFileList: file list response num items={} truncated={}", list.getObjectSummaries().size(), truncated);
-                for (S3ObjectSummary sum : list.getObjectSummaries()) {
-                    String key = sum.getKey();
-                    addrs.add(key);
-                }
-                if (truncated) {
-                    list = s3.listNextBatchOfObjects(list);
-                }
-            } while (list.isTruncated());
-        } catch (AmazonClientException ex) {
-            throw new RuntimeException(ex);
+        if (s3 != null) {
+            try {
+                ObjectListing list = s3.listObjects(bucketName);
+                boolean truncated = list.isTruncated();
+                do {
+                    log.info("getFileList: file list response num items={} truncated={}", list.getObjectSummaries().size(), truncated);
+                    for (S3ObjectSummary sum : list.getObjectSummaries()) {
+                        String key = sum.getKey();
+                        addrs.add(key);
+                    }
+                    if (truncated) {
+                        list = s3.listNextBatchOfObjects(list);
+                    }
+                } while (list.isTruncated());
+            } catch (AmazonClientException ex) {
+                throw new RuntimeException(ex);
+            }
+        } else {
+            log.warn("Cant lookup file list, no s3 client");
         }
 
         return addrs;
