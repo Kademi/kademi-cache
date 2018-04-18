@@ -90,7 +90,7 @@ public class S3FileListService implements FileListService {
         return addrs;
     }
 
-    private void initClient() {
+    private synchronized void initClient() {
         if (!initFinished) {
             initFinished = true;
 
@@ -121,7 +121,7 @@ public class S3FileListService implements FileListService {
 
             try {
                 s3 = builder.build();
-            } catch (Exception e) {                
+            } catch (Exception e) {
                 log.error("initClient: Exception. Region={}" + region + " Cred=" + cred + " Bucket=" + bucketName + " RegionID=" + regionId, e);
                 return ;
             }
@@ -200,8 +200,9 @@ public class S3FileListService implements FileListService {
     @Override
     public void addFileList(List<String> list) {
         log.info("addFileList: items={}", list.size());
+
         initClient();
-        
+
         if( s3 == null ) {
             log.warn("addFileList: Cant set file list becasue dont have an s3 client");
             return ;
