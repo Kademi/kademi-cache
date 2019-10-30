@@ -9,12 +9,16 @@ import com.google.common.cache.Cache;
 import java.util.ArrayList;
 import java.util.List;
 import org.hibernate.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author brad
  */
 public class InvalidationManager {
+
+    private static final Logger log = LoggerFactory.getLogger(InvalidationManager.class);
 
     private final Channel channel;
     private final ThreadLocal<List<InvalidationAction>> tlInvalidationActionsList = new ThreadLocal();
@@ -42,6 +46,7 @@ public class InvalidationManager {
         List<InvalidationAction> list = enqueuedInvalidations(false);
         tlInvalidationActionsList.remove();
         if (list != null) {
+            log.info("onCommit: invalidating {} items", list.size());
             for (InvalidationAction ia : list) {
                 doInvalidation(ia);
             }
