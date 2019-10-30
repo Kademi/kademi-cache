@@ -14,8 +14,8 @@ import org.hibernate.cache.spi.TimestampsRegion;
  */
 public class KademiTimestampsRegion extends KademiCacheRegion implements TimestampsRegion{
 
-    public KademiTimestampsRegion(String string, Channel channel, Properties props) {
-        super(string, channel, props, null);
+    public KademiTimestampsRegion(String string, Channel channel, Properties props, InvalidationManager imgr) {
+        super(string, channel, props, null, imgr);
     }
 
 

@@ -17,8 +17,8 @@ import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
  */
 public class KademiEntityRegion extends KademiCacheRegion implements EntityRegion{
 
-    public KademiEntityRegion(String string,Channel channel, Properties props, CacheDataDescription cdd) {
-        super(string, channel, props, cdd);
+    public KademiEntityRegion(String string,Channel channel, Properties props, CacheDataDescription cdd, InvalidationManager imgr) {
+        super(string, channel, props, cdd, imgr);
     }
 
 

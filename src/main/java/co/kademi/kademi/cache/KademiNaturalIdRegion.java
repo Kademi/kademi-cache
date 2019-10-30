@@ -17,8 +17,8 @@ import org.hibernate.cache.spi.access.NaturalIdRegionAccessStrategy;
  */
 public class KademiNaturalIdRegion extends KademiCacheRegion implements NaturalIdRegion{
 
-    public KademiNaturalIdRegion(String string, Channel channel,Properties props, CacheDataDescription cdd) {
-        super(string, channel, props, cdd);
+    public KademiNaturalIdRegion(String string, Channel channel,Properties props, CacheDataDescription cdd, InvalidationManager imgr) {
+        super(string, channel, props, cdd, imgr);
     }
 
     @Override

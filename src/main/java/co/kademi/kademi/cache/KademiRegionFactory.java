@@ -39,6 +39,7 @@ public class KademiRegionFactory implements RegionFactory {
 
     private Properties props;
     private Channel channel;
+    private InvalidationManager imgr;
     private Map<String,KademiCacheRegion> mapOfRegions;
 
     @Override
@@ -48,6 +49,7 @@ public class KademiRegionFactory implements RegionFactory {
 
         String channelName = (String) props.get("hibernate.cache.provider_name");
         this.channel = Channel.get(channelName);
+        imgr = new InvalidationManager(channel);
         channel.registerListener(new ChannelListener() {
 
             @Override
@@ -115,14 +117,14 @@ public class KademiRegionFactory implements RegionFactory {
 
     @Override
     public EntityRegion buildEntityRegion(String regionName, Properties prprts, CacheDataDescription cdd) throws CacheException {
-        KademiEntityRegion r = new KademiEntityRegion(regionName, channel, prprts, cdd);
+        KademiEntityRegion r = new KademiEntityRegion(regionName, channel, prprts, cdd, imgr);
         mapOfRegions.put(regionName, r);
         return r;
     }
 
     @Override
     public NaturalIdRegion buildNaturalIdRegion(String regionName, Properties prprts, CacheDataDescription cdd) throws CacheException {
-        KademiNaturalIdRegion r = new KademiNaturalIdRegion(regionName, channel, prprts, cdd);
+        KademiNaturalIdRegion r = new KademiNaturalIdRegion(regionName, channel, prprts, cdd, imgr);
         mapOfRegions.put(regionName, r);
         return r;
     }
@@ -136,21 +138,21 @@ public class KademiRegionFactory implements RegionFactory {
         } else {
             log.info("buildCollectionRegion: create new cache region {}", regionName);
         }
-        KademiCollectionRegion r = new KademiCollectionRegion(regionName, channel, prprts, cdd);
+        KademiCollectionRegion r = new KademiCollectionRegion(regionName, channel, prprts, cdd, imgr);
         mapOfRegions.put(regionName, r);
         return r;
     }
 
     @Override
     public QueryResultsRegion buildQueryResultsRegion(String regionName, Properties prprts) throws CacheException {
-        KademiQueryResultsRegion r = new KademiQueryResultsRegion(regionName, channel, prprts, null);
+        KademiQueryResultsRegion r = new KademiQueryResultsRegion(regionName, channel, prprts, null, imgr);
         mapOfRegions.put(regionName, r);
         return r;
     }
 
     @Override
     public TimestampsRegion buildTimestampsRegion(String regionName, Properties prprts) throws CacheException {
-        KademiTimestampsRegion r = new KademiTimestampsRegion(regionName, channel, prprts);
+        KademiTimestampsRegion r = new KademiTimestampsRegion(regionName, channel, prprts, imgr);
         mapOfRegions.put(regionName, r);
         return r;
     }
@@ -168,6 +170,12 @@ public class KademiRegionFactory implements RegionFactory {
         BroadcastEventListener2 l2 = new BroadcastEventListener2(topicName, l);
         broadcastEventListeners.add(l2);
     }
+
+    public InvalidationManager getInvalidationManager() {
+        return imgr;
+    }
+
+
 
     private class BroadcastEventListener2{
         private final String topicName;

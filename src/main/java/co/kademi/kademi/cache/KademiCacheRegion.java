@@ -24,6 +24,7 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
 
     protected final String cacheName;
     private final Channel channel;
+    private final InvalidationManager imgr;
     protected final Properties props;
     protected final CacheDataDescription cdd;
     private final Cache<String, Object> cache;
@@ -31,8 +32,9 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
     private final int timeout;
     private final int maxSize;
 
-    public KademiCacheRegion(String name, Channel channel, Properties props, CacheDataDescription cdd) {
+    public KademiCacheRegion(String name, Channel channel, Properties props, CacheDataDescription cdd, InvalidationManager imgr) {
         this.cacheName = name;
+        this.imgr = imgr;
         this.channel = channel;
         this.props = props;
         this.cdd = cdd;
@@ -60,12 +62,9 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
     }
 
     protected void invalidate(Object key) {
+        // only process invalidations on transaction complete
         String sKey = key.toString();
-        cache.invalidate(sKey);
-        if (channel != null) {
-            InvalidateItemMessage m = new InvalidateItemMessage(cacheName, sKey);
-            channel.sendNotification(m);
-        }
+        imgr.enqueueInvalidation(cacheName, cache, sKey);
     }
 
     protected void invalidateAll() {
