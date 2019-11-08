@@ -37,7 +37,7 @@ public class InvalidationManager {
     }
 
     public void enqueueInvalidation(String cacheName, Cache<String, Object> cache, String key) {
-        log.info("enqueueInvalidation: cacheName={} key={}", cacheName, key);
+        //log.info("enqueueInvalidation: cacheName={} key={}", cacheName, key);
         List<InvalidationAction> list = enqueuedInvalidations(true);
         InvalidationAction ia = new InvalidationAction(cacheName, cache, key);
         list.add(ia);
