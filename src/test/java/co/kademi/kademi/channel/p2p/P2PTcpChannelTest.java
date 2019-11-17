@@ -6,7 +6,6 @@ package co.kademi.kademi.channel.p2p;
 import co.kademi.kademi.cache.channel.InvalidateItemMessage;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import org.junit.Assert;
 import org.junit.Before;
 
 /**
@@ -39,10 +38,10 @@ public class P2PTcpChannelTest {
 //        Assert.assertEquals(1, ch2.getClients().size());
 
 //        while (true) {
-            ch1.sendNotification(new InvalidateItemMessage("cache1", "key1"));
+            ch1.sendNotification(new InvalidateItemMessage("cache1", "key1", "p1"));
 //            System.out.println("sleep..");
 //            Thread.sleep(1000);
-            ch2.sendNotification(new InvalidateItemMessage("cache2", "key2"));
+            ch2.sendNotification(new InvalidateItemMessage("cache2", "key2", "p1"));
             Thread.sleep(1000);
 //        }
 

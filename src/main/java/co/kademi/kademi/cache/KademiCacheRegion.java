@@ -142,7 +142,7 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
         private final Cache<String, Object> defaultCache;
 
         public KademiCacheAccessor() {
-            defaultCache = createCache();
+            defaultCache = createCache(10); // very short TTL
         }
 
         public boolean contains(Object o) {
@@ -184,17 +184,21 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
             }
         }
 
-        //private final Cache<String, Object> cache;        
+        //private final Cache<String, Object> cache;
         private Serializable getPartitionId() {
             return cachePartitionService.currentPartitionKey(null);
         }
 
         private Cache<String, Object> cache() {
             Serializable id = getPartitionId();
+            return cache(id);
+        }
+
+        private Cache<String, Object> cache(Serializable id) {
             if (id != null) {
                 Cache<String, Object> cache = mapOfCaches.get(id);
                 if (cache == null) {
-                    cache = createCache();
+                    cache = createCache(ttlMins*60);
                     mapOfCaches.put(id, cache);
                 }
                 return cache;
@@ -203,10 +207,11 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
             }
         }
 
-        private Cache<String, Object> createCache() {
+
+        private Cache<String, Object> createCache(int seconds) {
             return CacheBuilder.newBuilder()
                     .maximumSize(maxSize)
-                    .expireAfterWrite(ttlMins, TimeUnit.MINUTES)
+                    .expireAfterWrite(seconds, TimeUnit.SECONDS)
                     .build();
         }
 
@@ -222,8 +227,20 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
             cache().invalidate(key);
         }
 
+        public void invalidate(Serializable key, Serializable partitionId) {
+            cache(partitionId).invalidate(key);
+        }
+
+
         public void invalidateAll() {
             cache().invalidateAll();
+        }
+
+        public void invalidateAll(Serializable partitionId) {
+            Cache<String, Object> c = cache(partitionId);
+            log.info("invalidateAll: partition: {} current size={}", partitionId, c.size());
+            c.invalidateAll();
+            log.info("invalidateAll: partition: {} after invalidation size={}", partitionId, c.size());
         }
 
         public Map asMap() {
@@ -234,6 +251,15 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
             }
             return m;
         }
+
+        public Map<Serializable,Long> getPartitionCounts() {
+            Map<Serializable,Long> map = new HashMap<>();
+            for( Map.Entry<Serializable, Cache<String, Object>> entry : this.mapOfCaches.entrySet() ) {
+                map.put(entry.getKey(), entry.getValue().size());
+            }
+            return map;
+        }
+
 
     }
 

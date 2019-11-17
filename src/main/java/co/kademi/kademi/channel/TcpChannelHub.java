@@ -90,7 +90,7 @@ public class TcpChannelHub implements Service {
             }
             byte[] data = (byte[]) message;
             Serializable msgObject = (Serializable) SerializationUtils.deserialize(data);
-            //log.info("messageReceived: from client {} msgClass={}", c, msgObject.getClass());
+            log.info("messageReceived: from client {} msgClass={}", c, msgObject.getClass());
             channelListener.handleNotification(null, msgObject);
         }
 
@@ -117,7 +117,7 @@ public class TcpChannelHub implements Service {
             log.error("Exception in TCP channel", cause);
         }
 
-        
+
     }
 
     public void stop() {

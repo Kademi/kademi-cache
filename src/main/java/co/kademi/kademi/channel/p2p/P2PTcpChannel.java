@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 public final class P2PTcpChannel implements Channel {
 
     private static final Logger log = LoggerFactory.getLogger(P2PTcpChannel.class);
-    
+
     private final String name;
     private final TcpChannelHub server;
     private final List<TcpChannelClient> clients;
@@ -49,7 +49,7 @@ public final class P2PTcpChannel implements Channel {
 
             @Override
             public void handleNotification(UUID sourceId, Serializable msg) {
-                //log.info("handleNotification: source={} receiver={} msg class={}", sourceId, server.getBindAddress(), msg.getClass());
+                log.info("handleNotification: source={} receiver={} msg class={}", sourceId, server.getBindAddress(), msg.getClass());
                 for (ChannelListener l : channelListeners) {
                     l.handleNotification(sourceId, msg);
                 }
@@ -88,11 +88,11 @@ public final class P2PTcpChannel implements Channel {
     public void connectToServers() {
         InetAddress host = server.getBindAddress();
         InetSocketAddress myAddress = new InetSocketAddress(host, server.getPort());
-        
+
         // Add me to make sure is available to other servers
         log.info("channel-start: register my address={}", myAddress);
         discoveryService.registerAddresses(Arrays.asList(myAddress));
-        
+
         log.info("Check for connections to servers. My address={}", myAddress);
         Collection<InetSocketAddress> peerAddresses = discoveryService.getRegisteredAddresses();
         log.info("Connect to {} peers", peerAddresses.size());

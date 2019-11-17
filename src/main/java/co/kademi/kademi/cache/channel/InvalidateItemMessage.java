@@ -37,12 +37,12 @@ public class InvalidateItemMessage implements Serializable {
     public Serializable getPartitionId() {
         return partitionId;
     }
-    
-    
+
+
 
     @Override
     public String toString() {
-        return "Invalidate: " + cacheName + "/" + key;
+        return "Invalidate: cache=" + cacheName + "; key=" + key + "; partition=" + partitionId;
     }
 
 

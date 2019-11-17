@@ -24,14 +24,14 @@ public class LocalChannelRunner {
         FileListP2PMemberDiscoveryService disco = new FileListP2PMemberDiscoveryService(fileListService);
 
         Scanner scanner = new Scanner(System.in);
-        
+
         System.out.println("Enter a port number");
         String d = scanner.next();
         int i = 9000;
         if( StringUtils.isNotBlank(d)) {
-           i = Integer.parseInt(d);            
+           i = Integer.parseInt(d);
         }
-        
+
         P2PTcpChannel ch1 = new P2PTcpChannel("chan", i, disco, "127.0");
         ch1.registerListener(new ChannelListener() {
 
@@ -52,13 +52,15 @@ public class LocalChannelRunner {
         });
         ch1.start();
 
-        while (true) {            
+        while (true) {
             System.out.println("Enter a key to send");
             d = scanner.next();
 
             long tm = System.currentTimeMillis();
             for (int count = 0; count < 1; count++) {
-                ch1.sendNotification(new InvalidateItemMessage("cache1", d + "-" + count));
+                InvalidateItemMessage iim = new InvalidateItemMessage("hibernate.io.milton.vfs.db.AuditItem", d + "-" + count, 14l);
+                System.out.println("Sending " + iim);
+                ch1.sendNotification(iim);
             }
             tm = System.currentTimeMillis() - tm;
             System.out.println("Sent. Duration=" + tm + "ms");

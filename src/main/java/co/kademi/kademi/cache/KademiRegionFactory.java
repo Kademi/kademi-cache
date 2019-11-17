@@ -60,29 +60,32 @@ public class KademiRegionFactory implements RegionFactory {
             }
         }
         if (cachePartitionService == null) {
-            cachePartitionService = (Object changed) -> "default";
+            cachePartitionService = new DefaultCachePartitionService();
         }
         channel.registerListener(new ChannelListener() {
 
             @Override
             public void handleNotification(UUID sourceId, Serializable msg) {
-                if (msg instanceof InvalidateItemMessage) {
-                    InvalidateItemMessage iim = (InvalidateItemMessage) msg;
-                    cachePartitionService.use(() -> {
+                log.info("handleNotification: source={} msg={}", sourceId, msg);
+                try {
+                    if (msg instanceof InvalidateItemMessage) {
+                        InvalidateItemMessage iim = (InvalidateItemMessage) msg;
                         imgr.onInvalidateMessage(iim);
-                    });
 
-                } else if (msg instanceof InvalidateAllMessage) {
-                    InvalidateAllMessage iam = (InvalidateAllMessage) msg;
-                    KademiCacheRegion r = mapOfRegions.get(iam.getCacheName());
-                    if (r != null) {
-                        r.removeAll();
+                    } else if (msg instanceof InvalidateAllMessage) {
+                        InvalidateAllMessage iam = (InvalidateAllMessage) msg;
+                        KademiCacheRegion r = mapOfRegions.get(iam.getCacheName());
+                        if (r != null) {
+                            r.removeAll();
+                        }
+                    } else if (msg instanceof BroadcastMessage) {
+                        BroadcastMessage m = (BroadcastMessage) msg;
+                        for (BroadcastEventListener2 l : broadcastEventListeners) {
+                            l.receive(l.topicName, m.key, m.value);
+                        }
                     }
-                } else if (msg instanceof BroadcastMessage) {
-                    BroadcastMessage m = (BroadcastMessage) msg;
-                    for (BroadcastEventListener2 l : broadcastEventListeners) {
-                        l.receive(l.topicName, m.key, m.value);
-                    }
+                } catch (Throwable e) {
+                    log.error("Exception handling network notifiction: Msg class=" + msg.getClass(), e);
                 }
             }
 

@@ -7,8 +7,10 @@ import co.kademi.kademi.cache.channel.InvalidateItemMessage;
 import co.kademi.kademi.channel.Channel;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,8 +53,20 @@ public class InvalidationManager {
         tlInvalidationActionsList.remove();
         if (list != null) {
             log.info("onCommit: invalidating {} items", list.size());
+            Set<Serializable> partitionIds = new HashSet<>();
             for (InvalidationAction ia : list) {
                 doInvalidation(ia);
+                partitionIds.add(ia.partitionId);
+            }
+
+            // flush all query caches for this partiton
+            for( Serializable pId : partitionIds) {
+                for( KademiCacheRegion r : this.mapOfRegions.values()) {
+                    if( r instanceof  KademiQueryResultsRegion) {
+                        KademiQueryResultsRegion qrr = (KademiQueryResultsRegion) r;
+                        qrr.getCache().invalidateAll(pId);
+                    }
+                }
             }
         }
     }
@@ -73,10 +87,17 @@ public class InvalidationManager {
         //lookup cache, and remove item. do not call invalidate otherwise will recur
         KademiCacheRegion r = mapOfRegions.get(iim.getCacheName());
         if (r != null) {
-            r.remove(iim.getKey());
+            //r.remove(iim.getKey());
+            r.getCache().invalidate(iim.getKey(), iim.getPartitionId());
             if( r instanceof KademiEntityRegion) {
                 // need to invalidate all query results caches
-                
+                for( KademiCacheRegion r2 : mapOfRegions.values() ) {
+                    if( r2 instanceof KademiQueryResultsRegion ) {
+                        KademiQueryResultsRegion qrr = (KademiQueryResultsRegion) r2;
+                        log.info("onInvalidateMessage: Invalidate query cache {} in partition {} due to network message", qrr.getName(), iim.getPartitionId());
+                        qrr.getCache().invalidateAll(iim.getPartitionId()); // this will flush the entire cache, for the current partiton only
+                    }
+                }
             }
         } else {
             log.warn("---- CACHE NOT FOUND " + iim.getCacheName() + " -----");
