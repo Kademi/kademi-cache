@@ -18,11 +18,13 @@ import org.hibernate.cache.spi.access.SoftLock;
 public class KademiEntityRegionAccessStrategy implements EntityRegionAccessStrategy {
 
     private final KademiEntityRegion entityRegion;
+    private final KademiRegionFactory regionFactory;
     private final Properties props;
 
-    public KademiEntityRegionAccessStrategy(KademiEntityRegion aThis, Properties props) {
+    public KademiEntityRegionAccessStrategy(KademiEntityRegion aThis, Properties props, KademiRegionFactory regionFactory) {
         this.entityRegion = aThis;
         this.props = props;
+        this.regionFactory = regionFactory;
     }
 
     @Override

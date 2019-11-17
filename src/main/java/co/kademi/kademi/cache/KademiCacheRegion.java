@@ -1,11 +1,11 @@
 package co.kademi.kademi.cache;
 
 import co.kademi.kademi.cache.channel.InvalidateAllMessage;
-import co.kademi.kademi.cache.channel.InvalidateItemMessage;
 import co.kademi.kademi.channel.Channel;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
@@ -27,54 +27,53 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
     private final InvalidationManager imgr;
     protected final Properties props;
     protected final CacheDataDescription cdd;
-    private final Cache<String, Object> cache;
+    private final CachePartitionService cachePartitionService;
     private final int ttlMins;
     private final int timeout;
     private final int maxSize;
 
-    public KademiCacheRegion(String name, Channel channel, Properties props, CacheDataDescription cdd, InvalidationManager imgr) {
+    private final KademiCacheAccessor cacheAccessor = new KademiCacheAccessor();
+
+    public KademiCacheRegion(String name, Channel channel, Properties props, CacheDataDescription cdd, InvalidationManager imgr, CachePartitionService cachePartitionService) {
         this.cacheName = name;
         this.imgr = imgr;
         this.channel = channel;
         this.props = props;
         this.cdd = cdd;
+        this.cachePartitionService = cachePartitionService;
 
         ttlMins = Integer.parseInt(props.getProperty("hibernate.cache.ttl_mins", "5"));
 
         int i = Integer.parseInt(props.getProperty("hibernate.cache.max_size", "1000"));
         String k = "hibernate.cache." + name + ".max_size";
-        if( props.containsKey(k)) {
+        if (props.containsKey(k)) {
             i = Integer.parseInt(props.getProperty(k));
         }
         this.maxSize = i;
 
-        cache = CacheBuilder.newBuilder()
-                .maximumSize(maxSize)
-                .expireAfterWrite(ttlMins, TimeUnit.MINUTES)
-                .build();
         timeout = 600; // not sure of units
 
     }
 
     public void remove(Serializable key) {
         String sKey = key.toString();
-        cache.invalidate(sKey);
+        cacheAccessor.invalidate(sKey);
     }
 
     protected void invalidate(Object key) {
         // only process invalidations on transaction complete
         String sKey = key.toString();
-        imgr.enqueueInvalidation(cacheName, cache, sKey);
+        Serializable partitionId = cachePartitionService.currentPartitionKey(null);
+        imgr.enqueueInvalidation(cacheName, cacheAccessor, sKey, partitionId);
     }
 
     protected void invalidateAll() {
-        cache.invalidateAll();
+        cacheAccessor.invalidateAll();
         if (channel != null) {
             InvalidateAllMessage m = new InvalidateAllMessage(cacheName);
             channel.sendNotification(m);
         }
     }
-
 
     @Override
     public String getName() {
@@ -88,18 +87,17 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
 
     @Override
     public boolean contains(Object o) {
-        Object v = cache.getIfPresent(o);
-        return v != null;
+        return cacheAccessor.contains(o);
     }
 
     @Override
     public long getSizeInMemory() {
-        return cache.size();
+        return cacheAccessor.getElementCountInMemory();
     }
 
     @Override
     public long getElementCountInMemory() {
-        return cache.size();
+        return cacheAccessor.getElementCountInMemory();
     }
 
     @Override
@@ -109,7 +107,7 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
 
     @Override
     public Map toMap() {
-        return cache.asMap();
+        return null;
     }
 
     @Override
@@ -122,12 +120,12 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
         return timeout;
     }
 
-    public Cache<String, Object> getCache() {
-        return cache;
+    public KademiCacheAccessor getCache() {
+        return cacheAccessor;
     }
 
     public void removeAll() {
-        cache.invalidateAll();
+        cacheAccessor.invalidateReallyAll();
     }
 
     public int getTtlMins() {
@@ -138,7 +136,105 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
         return maxSize;
     }
 
+    public class KademiCacheAccessor {
 
+        private final Map<Serializable, Cache<String, Object>> mapOfCaches = new HashMap<>();
+        private final Cache<String, Object> defaultCache;
 
+        public KademiCacheAccessor() {
+            defaultCache = createCache();
+        }
+
+        public boolean contains(Object o) {
+            Object v = defaultCache.getIfPresent(o);
+            if (v != null) {
+                return true;
+            }
+
+            for (Cache<String, Object> c : mapOfCaches.values()) {
+                v = defaultCache.getIfPresent(o);
+                if (v != null) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public long getSizeInMemory() {
+            long s = defaultCache.size();
+            for (Cache<String, Object> c : mapOfCaches.values()) {
+                s += c.size();
+            }
+            return s;
+        }
+
+        public long getElementCountInMemory() {
+            long s = defaultCache.size();
+            for (Cache<String, Object> c : mapOfCaches.values()) {
+                s += c.size();
+            }
+            return s;
+        }
+
+        void invalidateReallyAll() {
+            defaultCache.invalidateAll();
+            for (Cache<String, Object> c : mapOfCaches.values()) {
+                c.invalidateAll();
+            }
+        }
+
+        //private final Cache<String, Object> cache;        
+        private Serializable getPartitionId() {
+            return cachePartitionService.currentPartitionKey(null);
+        }
+
+        private Cache<String, Object> cache() {
+            Serializable id = getPartitionId();
+            if (id != null) {
+                Cache<String, Object> cache = mapOfCaches.get(id);
+                if (cache == null) {
+                    cache = createCache();
+                    mapOfCaches.put(id, cache);
+                }
+                return cache;
+            } else {
+                return defaultCache;
+            }
+        }
+
+        private Cache<String, Object> createCache() {
+            return CacheBuilder.newBuilder()
+                    .maximumSize(maxSize)
+                    .expireAfterWrite(ttlMins, TimeUnit.MINUTES)
+                    .build();
+        }
+
+        public Object getIfPresent(String key) {
+            return cache().getIfPresent(key);
+        }
+
+        public void put(String key, Object value) {
+            cache().put(key, value);
+        }
+
+        public void invalidate(Serializable key) {
+            cache().invalidate(key);
+        }
+
+        public void invalidateAll() {
+            cache().invalidateAll();
+        }
+
+        public Map asMap() {
+            Map m = new HashMap();
+            m.putAll(defaultCache.asMap());
+            for (Cache<String, Object> c : mapOfCaches.values()) {
+                m.putAll(c.asMap());
+            }
+            return m;
+        }
+
+    }
 
 }

@@ -13,6 +13,7 @@ public interface ChannelListener {
     /**
      * Called on receipt of a message from the channel
      *
+     * @param sourceId
      * @param msg
      */
     void handleNotification( UUID sourceId, Serializable msg );
@@ -21,6 +22,8 @@ public interface ChannelListener {
 
     /**
      * Called when we get a connection to the hub
+     * @param sourceId
+     * @param remoteAddress
      */
     void onConnect(UUID sourceId, InetAddress remoteAddress);
 

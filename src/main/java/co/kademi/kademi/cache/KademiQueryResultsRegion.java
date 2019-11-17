@@ -15,9 +15,10 @@ import org.hibernate.cache.spi.QueryResultsRegion;
  * @author brad
  */
 public class KademiQueryResultsRegion extends KademiCacheRegion implements QueryResultsRegion {
-
-    public KademiQueryResultsRegion(String string,Channel channel, Properties props, CacheDataDescription cdd, InvalidationManager imgr) {
-        super(string, channel, props, cdd, imgr);
+    
+    
+    public KademiQueryResultsRegion(String string,Channel channel, Properties props, CacheDataDescription cdd, InvalidationManager imgr, CachePartitionService cachePartitionService) {
+        super(string, channel, props, cdd, imgr, cachePartitionService);
     }
 
     @Override

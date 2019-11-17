@@ -16,15 +16,18 @@ import org.hibernate.cache.spi.access.EntityRegionAccessStrategy;
  * @author brad
  */
 public class KademiEntityRegion extends KademiCacheRegion implements EntityRegion{
+    
+    private final KademiRegionFactory regionFactory;
 
-    public KademiEntityRegion(String string,Channel channel, Properties props, CacheDataDescription cdd, InvalidationManager imgr) {
-        super(string, channel, props, cdd, imgr);
+    public KademiEntityRegion( KademiRegionFactory regionFactory, String string,Channel channel, Properties props, CacheDataDescription cdd, InvalidationManager imgr, CachePartitionService cachePartitionService) {
+        super(string, channel, props, cdd, imgr, cachePartitionService);
+        this.regionFactory = regionFactory;
     }
 
 
     @Override
     public EntityRegionAccessStrategy buildAccessStrategy(AccessType accessType) throws CacheException {
-        return new KademiEntityRegionAccessStrategy(this, props);
+        return new KademiEntityRegionAccessStrategy(this, props, regionFactory);
 
     }
 

@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import org.apache.commons.lang.StringUtils;
 import org.hibernate.cache.CacheException;
 import org.hibernate.cache.spi.CacheDataDescription;
 import org.hibernate.cache.spi.CollectionRegion;
@@ -36,11 +37,11 @@ public class KademiRegionFactory implements RegionFactory {
 
     private final List<BroadcastEventListener2> broadcastEventListeners = new ArrayList<>();
 
-
     private Properties props;
     private Channel channel;
     private InvalidationManager imgr;
-    private Map<String,KademiCacheRegion> mapOfRegions;
+    private CachePartitionService cachePartitionService;
+    private Map<String, KademiCacheRegion> mapOfRegions;
 
     @Override
     public void start(Settings stngs, Properties prprts) throws CacheException {
@@ -49,29 +50,37 @@ public class KademiRegionFactory implements RegionFactory {
 
         String channelName = (String) props.get("hibernate.cache.provider_name");
         this.channel = Channel.get(channelName);
-        imgr = new InvalidationManager(channel);
+        imgr = new InvalidationManager(channel, mapOfRegions);
+        String cachePartServiceClass = (String) props.get("kademi.cache.partition_name");
+        if (StringUtils.isNotBlank(cachePartServiceClass)) {
+            try {
+                cachePartitionService = (CachePartitionService) Class.forName(cachePartServiceClass).newInstance();
+            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
+                log.error("Exception creating cachePartitionService: " + cachePartServiceClass, ex);
+            }
+        }
+        if (cachePartitionService == null) {
+            cachePartitionService = (Object changed) -> "default";
+        }
         channel.registerListener(new ChannelListener() {
 
             @Override
             public void handleNotification(UUID sourceId, Serializable msg) {
-                if( msg instanceof InvalidateItemMessage) {
+                if (msg instanceof InvalidateItemMessage) {
                     InvalidateItemMessage iim = (InvalidateItemMessage) msg;
-                    //lookup cache, and remove item. do not call invalidate otherwise will recur
-                    KademiCacheRegion r = mapOfRegions.get(iim.getCacheName());
-                    if( r != null ) {
-                        r.remove(iim.getKey());
-                    } else {
-                        log.warn("---- CACHE NOT FOUND " + iim.getCacheName() + " -----");
-                    }
-                } else if( msg instanceof InvalidateAllMessage) {
+                    cachePartitionService.use(() -> {
+                        imgr.onInvalidateMessage(iim);
+                    });
+
+                } else if (msg instanceof InvalidateAllMessage) {
                     InvalidateAllMessage iam = (InvalidateAllMessage) msg;
                     KademiCacheRegion r = mapOfRegions.get(iam.getCacheName());
-                    if( r != null ) {
+                    if (r != null) {
                         r.removeAll();
                     }
-                } else if( msg instanceof BroadcastMessage) {
+                } else if (msg instanceof BroadcastMessage) {
                     BroadcastMessage m = (BroadcastMessage) msg;
-                    for( BroadcastEventListener2 l : broadcastEventListeners) {
+                    for (BroadcastEventListener2 l : broadcastEventListeners) {
                         l.receive(l.topicName, m.key, m.value);
                     }
                 }
@@ -92,8 +101,6 @@ public class KademiRegionFactory implements RegionFactory {
     public Channel getChannel() {
         return channel;
     }
-
-
 
     @Override
     public void stop() {
@@ -117,42 +124,42 @@ public class KademiRegionFactory implements RegionFactory {
 
     @Override
     public EntityRegion buildEntityRegion(String regionName, Properties prprts, CacheDataDescription cdd) throws CacheException {
-        KademiEntityRegion r = new KademiEntityRegion(regionName, channel, prprts, cdd, imgr);
+        KademiEntityRegion r = new KademiEntityRegion(this, regionName, channel, prprts, cdd, imgr, cachePartitionService);
         mapOfRegions.put(regionName, r);
         return r;
     }
 
     @Override
     public NaturalIdRegion buildNaturalIdRegion(String regionName, Properties prprts, CacheDataDescription cdd) throws CacheException {
-        KademiNaturalIdRegion r = new KademiNaturalIdRegion(regionName, channel, prprts, cdd, imgr);
+        KademiNaturalIdRegion r = new KademiNaturalIdRegion(regionName, channel, prprts, cdd, imgr, cachePartitionService);
         mapOfRegions.put(regionName, r);
         return r;
     }
 
     @Override
     public CollectionRegion buildCollectionRegion(String regionName, Properties prprts, CacheDataDescription cdd) throws CacheException {
-        if( mapOfRegions.containsKey(regionName)) {
+        if (mapOfRegions.containsKey(regionName)) {
 //            throw new CacheException("Duplicate cache region");
             log.info("buildCollectionRegion: return existing cache region: {}", regionName);
             return (CollectionRegion) mapOfRegions.get(regionName);
         } else {
             log.info("buildCollectionRegion: create new cache region {}", regionName);
         }
-        KademiCollectionRegion r = new KademiCollectionRegion(regionName, channel, prprts, cdd, imgr);
+        KademiCollectionRegion r = new KademiCollectionRegion(regionName, channel, prprts, cdd, imgr, cachePartitionService);
         mapOfRegions.put(regionName, r);
         return r;
     }
 
     @Override
     public QueryResultsRegion buildQueryResultsRegion(String regionName, Properties prprts) throws CacheException {
-        KademiQueryResultsRegion r = new KademiQueryResultsRegion(regionName, channel, prprts, null, imgr);
+        KademiQueryResultsRegion r = new KademiQueryResultsRegion(regionName, channel, prprts, null, imgr, cachePartitionService);
         mapOfRegions.put(regionName, r);
         return r;
     }
 
     @Override
     public TimestampsRegion buildTimestampsRegion(String regionName, Properties prprts) throws CacheException {
-        KademiTimestampsRegion r = new KademiTimestampsRegion(regionName, channel, prprts, imgr);
+        KademiTimestampsRegion r = new KademiTimestampsRegion(regionName, channel, prprts, imgr, cachePartitionService);
         mapOfRegions.put(regionName, r);
         return r;
     }
@@ -175,9 +182,8 @@ public class KademiRegionFactory implements RegionFactory {
         return imgr;
     }
 
+    private class BroadcastEventListener2 {
 
-
-    private class BroadcastEventListener2{
         private final String topicName;
         private final BroadcastEventListener listener;
 
@@ -187,13 +193,12 @@ public class KademiRegionFactory implements RegionFactory {
         }
 
         void receive(String topicName, Serializable key, Serializable value) {
-            if( topicName.equals(this.topicName)) {
+            if (topicName.equals(this.topicName)) {
                 listener.receive(key, value);
             }
         }
 
     }
-
 
     public static interface BroadcastEventListener {
 
@@ -202,11 +207,12 @@ public class KademiRegionFactory implements RegionFactory {
     }
 
     public static class BroadcastMessage implements Serializable {
+
         private final String topicName;
         private final Serializable key;
         private final Serializable value;
 
-        public BroadcastMessage(String topicName,Serializable key, Serializable value) {
+        public BroadcastMessage(String topicName, Serializable key, Serializable value) {
             this.topicName = topicName;
             this.key = key;
             this.value = value;

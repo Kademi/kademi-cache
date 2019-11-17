@@ -12,15 +12,18 @@ import java.io.Serializable;
 public class InvalidateItemMessage implements Serializable {
     private final String cacheName;
     private final String key;
+    private final Serializable partitionId;
 
     public InvalidateItemMessage() {
         this.cacheName = null;
         this.key = null;
+        this.partitionId = null;
     }
 
-    public InvalidateItemMessage(String cacheName, String key) {
+    public InvalidateItemMessage(String cacheName, String key, Serializable partitionId) {
         this.cacheName = cacheName;
         this.key = key;
+        this.partitionId = partitionId;
     }
 
     public String getCacheName() {
@@ -30,6 +33,12 @@ public class InvalidateItemMessage implements Serializable {
     public Serializable getKey() {
         return key;
     }
+
+    public Serializable getPartitionId() {
+        return partitionId;
+    }
+    
+    
 
     @Override
     public String toString() {

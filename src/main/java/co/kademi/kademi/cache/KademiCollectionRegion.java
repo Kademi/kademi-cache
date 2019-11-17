@@ -18,8 +18,8 @@ import org.hibernate.cache.spi.access.SoftLock;
  */
 public class KademiCollectionRegion extends KademiCacheRegion implements CollectionRegion {
 
-    public KademiCollectionRegion(String string, Channel channel, Properties props, CacheDataDescription cdd, InvalidationManager imgr) {
-        super(string, channel, props, cdd, imgr);
+    public KademiCollectionRegion(String string, Channel channel, Properties props, CacheDataDescription cdd, InvalidationManager imgr, CachePartitionService cachePartitionService) {
+        super(string, channel, props, cdd, imgr, cachePartitionService);
     }
 
 
