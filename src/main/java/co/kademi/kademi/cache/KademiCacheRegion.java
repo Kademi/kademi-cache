@@ -232,9 +232,9 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
 
         public void invalidate(Serializable key, Serializable partitionId) {
             Cache<String, Object> c = cache(partitionId);
-            log.info("invalidate: part={} key={} size before={}", partitionId, key, c.size());
+            //log.info("invalidate: part={} key={} size before={}", partitionId, key, c.size());
             c.invalidate(key);
-            log.info("invalidate: part={} key={} size after={} does contain?={}", partitionId, key, c.size(), c.getIfPresent(key));
+            //log.info("invalidate: part={} key={} size after={} does contain?={}", partitionId, key, c.size(), c.getIfPresent(key));
             defaultCache.invalidate(key); // must always invalidate from the default cache, because this is used prior to locating the rootfolder
         }
 
