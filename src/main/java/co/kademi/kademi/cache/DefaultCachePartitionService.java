@@ -21,7 +21,7 @@ public class DefaultCachePartitionService implements CachePartitionService {
         if (id != null) {
             return id;
         }
-        return "default";
+        return null;
     }
 
 }

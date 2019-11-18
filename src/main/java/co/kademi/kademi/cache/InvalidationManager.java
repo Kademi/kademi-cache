@@ -85,7 +85,7 @@ public class InvalidationManager {
     }
 
     private void doInvalidation(InvalidationAction ia) {
-        ia.cacheAccessor.invalidate(ia.key);
+        ia.cacheAccessor.invalidate(ia.key, ia.partitionId);
         if (channel != null) {
             InvalidateItemMessage m = new InvalidateItemMessage(ia.cacheName, ia.key, ia.partitionId);
             channel.sendNotification(m);

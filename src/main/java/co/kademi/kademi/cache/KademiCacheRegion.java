@@ -220,20 +220,28 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
         }
 
         public void put(String key, Object value) {
+            Serializable id = getPartitionId();
+            //log.info("put: partition={} key={} value={}", id, key, value);
             cache().put(key, value);
         }
 
         public void invalidate(Serializable key) {
             cache().invalidate(key);
+            defaultCache.invalidate(key);
         }
 
         public void invalidate(Serializable key, Serializable partitionId) {
-            cache(partitionId).invalidate(key);
+            Cache<String, Object> c = cache(partitionId);
+            log.info("invalidate: part={} key={} size before={}", partitionId, key, c.size());
+            c.invalidate(key);
+            log.info("invalidate: part={} key={} size after={} does contain?={}", partitionId, key, c.size(), c.getIfPresent(key));
+            defaultCache.invalidate(key); // must always invalidate from the default cache, because this is used prior to locating the rootfolder
         }
 
 
         public void invalidateAll() {
             cache().invalidateAll();
+            defaultCache.invalidateAll();
         }
 
         public void invalidateAll(Serializable partitionId) {
@@ -244,6 +252,7 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
             log.info("invalidateAll: partition: {} current size={}", partitionId, c.size());
             c.invalidateAll();
             log.info("invalidateAll: partition: {} after invalidation size={}", partitionId, c.size());
+            defaultCache.invalidateAll();
         }
 
         public Map asMap() {
