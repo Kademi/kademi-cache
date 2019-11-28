@@ -249,9 +249,9 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
             if( c.size() == 0 ) {
                 return ;
             }
-            log.info("invalidateAll: partition: {} current size={}", partitionId, c.size());
+            log.info("invalidateAll: cache: {} partition: {} current size={}", KademiCacheRegion.this.cacheName, partitionId, c.size());
             c.invalidateAll();
-            log.info("invalidateAll: partition: {} after invalidation size={}", partitionId, c.size());
+            //log.info("invalidateAll: partition: {} after invalidation size={}", partitionId, c.size());
             defaultCache.invalidateAll();
         }
 
