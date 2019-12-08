@@ -24,7 +24,7 @@ public class InvalidationManager {
     private static final Logger log = LoggerFactory.getLogger(InvalidationManager.class);
 
     private final Channel channel;
-    private final ThreadLocal<List<InvalidationAction>> tlInvalidationActionsList = new ThreadLocal();
+    private final ThreadLocal<InvalidationState> tlInvalidationActionsList = new ThreadLocal();
     private final Map<String, KademiCacheRegion> mapOfRegions;
 
     public InvalidationManager(Channel channel, Map<String, KademiCacheRegion> mapOfRegions) {
@@ -32,14 +32,40 @@ public class InvalidationManager {
         this.mapOfRegions = mapOfRegions;
     }
 
-    private List<InvalidationAction> enqueuedInvalidations(boolean autocreate) {
-        List<InvalidationAction> list = tlInvalidationActionsList.get();
+    public void clearInvalidationState() {
+        tlInvalidationActionsList.remove();
+    }
+
+    private InvalidationState getInvalidationState(boolean autocreate) {
+        InvalidationState list = tlInvalidationActionsList.get();
         if (list == null && autocreate) {
-            list = new ArrayList<>();
+            list = new InvalidationState();
             tlInvalidationActionsList.set(list);
         }
         return list;
     }
+
+    private List<InvalidationAction> enqueuedInvalidations(boolean autocreate) {
+        InvalidationState is = getInvalidationState(autocreate);
+        if( is != null ) {
+            return is.invalidationsList;
+        }
+        return null;
+    }
+
+    public void lockCacheForTransaction() {
+        InvalidationState is = getInvalidationState(true);
+        is.cacheLocked = true;
+    }
+
+    public boolean isCacheLockedForTransaction() {
+        InvalidationState is = getInvalidationState(false);
+        if( is == null ) {
+            return false;
+        }
+        return is.cacheLocked;
+    }
+
 
     public void enqueueInvalidation(String cacheName, KademiCacheRegion.KademiCacheAccessor cacheAccessor, String key, Serializable partitionId) {
         //log.info("enqueueInvalidation: cacheName={} key={}", cacheName, key);
@@ -111,6 +137,12 @@ public class InvalidationManager {
         } else {
             log.warn("---- CACHE NOT FOUND " + iim.getCacheName() + " -----");
         }
+    }
+
+    private class InvalidationState {
+        private final List<InvalidationAction> invalidationsList = new ArrayList<>();
+        private boolean cacheLocked;    // if true, do not add to the cache for this transaction/thread
+
     }
 
     private class InvalidationAction {

@@ -220,6 +220,11 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
         }
 
         public void put(String key, Object value) {
+            if( imgr.isCacheLockedForTransaction() ) {
+                // https://github.com/Kademi/kademi-dev/issues/8465
+                log.info("put: cache is locked for this transaction, cannot add");
+                return ;
+            }
             Serializable id = getPartitionId();
             //log.info("put: partition={} key={} value={}", id, key, value);
             cache().put(key, value);
