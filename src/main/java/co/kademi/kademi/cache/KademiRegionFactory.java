@@ -64,12 +64,12 @@ public class KademiRegionFactory implements RegionFactory {
         }
 
         imgr = new InvalidationManager(channel, cachePartitionService, mapOfRegions);
-        
+
         channel.registerListener(new ChannelListener() {
 
             @Override
             public void handleNotification(UUID sourceId, Serializable msg) {
-                log.info("handleNotification: source={} msg={}", sourceId, msg);
+                //log.info("handleNotification: source={} msg={}", sourceId, msg);
                 try {
                     if (msg instanceof InvalidateItemMessage) {
                         InvalidateItemMessage iim = (InvalidateItemMessage) msg;

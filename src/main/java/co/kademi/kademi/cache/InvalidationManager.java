@@ -140,7 +140,7 @@ public class InvalidationManager {
             for (KademiCacheRegion r2 : mapOfRegions.values()) {
                 if (r2 instanceof KademiQueryResultsRegion) {
                     KademiQueryResultsRegion qrr = (KademiQueryResultsRegion) r2;
-                    log.info("onInvalidateMessage: Invalidate query cache {} in partition {} due to network message", qrr.getName(), iim.getPartitionId());
+                    //log.info("onInvalidateMessage: Invalidate query cache {} in partition {} due to network message", qrr.getName(), iim.getPartitionId());
                     qrr.getCache().invalidateAll(iim.getPartitionId()); // this will flush the entire cache, for the current partiton only
                 }
             }
