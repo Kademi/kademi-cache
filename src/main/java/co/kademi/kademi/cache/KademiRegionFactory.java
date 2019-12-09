@@ -50,7 +50,7 @@ public class KademiRegionFactory implements RegionFactory {
 
         String channelName = (String) props.get("hibernate.cache.provider_name");
         this.channel = Channel.get(channelName);
-        imgr = new InvalidationManager(channel, mapOfRegions);
+
         String cachePartServiceClass = (String) props.get("kademi.cache.partition_name");
         if (StringUtils.isNotBlank(cachePartServiceClass)) {
             try {
@@ -62,6 +62,9 @@ public class KademiRegionFactory implements RegionFactory {
         if (cachePartitionService == null) {
             cachePartitionService = new DefaultCachePartitionService();
         }
+
+        imgr = new InvalidationManager(channel, cachePartitionService, mapOfRegions);
+        
         channel.registerListener(new ChannelListener() {
 
             @Override
