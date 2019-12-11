@@ -24,7 +24,7 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
 
     protected final String cacheName;
     private final Channel channel;
-    private final InvalidationManager imgr;
+    protected final InvalidationManager imgr;
     protected final Properties props;
     protected final CacheDataDescription cdd;
     private final CachePartitionService cachePartitionService;

@@ -24,6 +24,11 @@ public class KademiQueryResultsRegion extends KademiCacheRegion implements Query
 
     @Override
     public Object get(Object key) throws CacheException {
+        // If the cache is locked, that means updates have been made, so any query results
+        // in the cache could be invalid
+        if( this.imgr.isCacheLockedForTransaction() ) {
+            return null;
+        }
         return getCache().getIfPresent(key.toString());
     }
 
