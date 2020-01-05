@@ -93,6 +93,7 @@ public class InvalidationManager {
             log.info("onCommit: invalidating {} items", list.size());
             Set<Serializable> partitionIds = new HashSet<>();
             for (InvalidationAction ia : list) {
+                log.info("onCommit key={} partition={}", ia.key, ia.partitionId);
                 doInvalidation(ia);
                 partitionIds.add(ia.partitionId);
             }
@@ -167,6 +168,13 @@ public class InvalidationManager {
             this.key = key;
             this.cacheName = cacheName;
             this.partitionId = partitionId;
+            
+            if( key == null ) {
+                log.warn("Null key!");
+            }
+            if( partitionId == null ) {
+                log.warn("Null partition!");
+            }
         }
 
     }
