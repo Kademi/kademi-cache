@@ -89,11 +89,11 @@ public class InvalidationManager {
     public void onCommit(Transaction tx) {
         List<InvalidationAction> list = enqueuedInvalidations(false);
         tlInvalidationActionsList.remove();
-        if (list != null) {
+        if (list != null && !list.isEmpty() ) {
             log.info("onCommit: invalidating {} items", list.size());
             Set<Serializable> partitionIds = new HashSet<>();
             for (InvalidationAction ia : list) {
-                log.info("onCommit key={} partition={}", ia.key, ia.partitionId);
+                //log.info("onCommit key={} partition={}", ia.key, ia.partitionId);
                 doInvalidation(ia);
                 partitionIds.add(ia.partitionId);
             }
@@ -170,10 +170,10 @@ public class InvalidationManager {
             this.partitionId = partitionId;
             
             if( key == null ) {
-                log.warn("Null key!");
+                //log.warn("Null key!");
             }
             if( partitionId == null ) {
-                log.warn("Null partition!");
+                //log.warn("Null partition!");
             }
         }
 
