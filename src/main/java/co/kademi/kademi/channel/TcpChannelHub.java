@@ -189,7 +189,7 @@ public class TcpChannelHub implements Service {
             String s = "Client: " + session.getRemoteAddress();
             if( lastMessageTime != null ) {
                 long tm = System.currentTimeMillis() - lastMessageTime;
-                s += " last message=" + tm + "ms ago";
+                s += " last message=" + (tm/1000) + "secs ago";
             }
             return s;
         }
