@@ -98,7 +98,7 @@ public final class P2PTcpChannel implements Channel {
         log.info("Connect to {} peers", peerAddresses.size());
         for (InetSocketAddress peerAddress : peerAddresses) {
             if (!peerAddress.equals(myAddress)) {
-                if( !hasClient(peerAddress)) {
+                if (!hasClient(peerAddress)) {
                     log.info("Not connected to {}, attempt to connect..", peerAddress);
                     connectToServer(peerAddress);
                 } else {
@@ -108,14 +108,16 @@ public final class P2PTcpChannel implements Channel {
         }
     }
 
-
-
     public void stop() {
-        server.stop();
-        for (TcpChannelClient c : clients) {
-            c.stop();
+        if (server != null) {
+            server.stop();
         }
-        clients.clear();
+        if (clients != null) {
+            for (TcpChannelClient c : clients) {
+                c.stop();
+            }
+            clients.clear();
+        }
     }
 
     @Override
@@ -156,16 +158,15 @@ public final class P2PTcpChannel implements Channel {
      * @return
      */
     private boolean hasClient(InetSocketAddress peerAddress) {
-        for( TcpChannelClient c : this.clients) {
-            if( c.getHubPort() == peerAddress.getPort() ) {
-                if( c.getHubAddress().equals(peerAddress.getAddress())) {
+        for (TcpChannelClient c : this.clients) {
+            if (c.getHubPort() == peerAddress.getPort()) {
+                if (c.getHubAddress().equals(peerAddress.getAddress())) {
                     return true;
                 }
             }
         }
         return false;
     }
-
 
     private InetAddress findBindAddress(String bindPrefix) throws SocketException {
         Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
@@ -199,16 +200,16 @@ public final class P2PTcpChannel implements Channel {
 
         TcpChannelClient clientToRemove = null;
         Iterator<TcpChannelClient> it = clients.iterator();
-        while(it.hasNext() ) {
+        while (it.hasNext()) {
             TcpChannelClient c = it.next();
-            if( c.getHubPort() == peerAddress.getPort()) {
-                if( c.getHubAddress().equals(peerAddress.getAddress())) {
+            if (c.getHubPort() == peerAddress.getPort()) {
+                if (c.getHubAddress().equals(peerAddress.getAddress())) {
                     clientToRemove = c;
                     break;
                 }
             }
         }
-        if( clientToRemove != null ) {
+        if (clientToRemove != null) {
             clients.remove(clientToRemove);
         }
     }
