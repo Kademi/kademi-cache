@@ -90,7 +90,7 @@ public class TcpChannelHub implements Service {
             }
             byte[] data = (byte[]) message;
             Serializable msgObject = (Serializable) SerializationUtils.deserialize(data);
-            log.info("messageReceived: from client {} msgClass={}", c, msgObject.getClass());
+            log.debug("messageReceived: from client {} msgClass={}", c, msgObject.getClass());
             channelListener.handleNotification(null, msgObject);
         }
 
@@ -106,7 +106,7 @@ public class TcpChannelHub implements Service {
         public void sessionOpened(IoSession session) throws Exception {
             Client client = new Client(session);
             clients.add(client);
-            log.info("added new client: " + client);
+            log.debug("added new client: " + client);
             InetSocketAddress remoteAdd = (InetSocketAddress) client.session.getRemoteAddress();
             channelListener.onConnect(client.id, remoteAdd.getAddress());
 
@@ -165,7 +165,7 @@ public class TcpChannelHub implements Service {
                 log.info("discarding message because state is stopped");
                 return true;
             }
-            log.info("onData: Hub received", message);
+            log.debug("onData: Hub received", message);
             try {
                 channelListener.handleNotification(id, message);
                 return true;
