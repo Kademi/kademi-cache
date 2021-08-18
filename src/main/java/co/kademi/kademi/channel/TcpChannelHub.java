@@ -85,7 +85,7 @@ public class TcpChannelHub implements Service {
         @Override
         public void messageReceived(IoSession session, Object message) throws Exception {
             Client c = (Client) session.getAttribute("client");
-            if( c != null ) {
+            if (c != null) {
                 c.lastMessageTime = System.currentTimeMillis();
             }
             byte[] data = (byte[]) message;
@@ -117,15 +117,20 @@ public class TcpChannelHub implements Service {
             log.error("Exception in TCP channel", cause);
         }
 
-
     }
 
     public void stop() {
         started = false;
-        sendQueue.clear();
-        acceptor.unbind();
+        if (sendQueue != null) {
+            sendQueue.clear();
+        }
+        if (acceptor != null) {
+            acceptor.unbind();
+        }
 
-        thSender.interrupt();
+        if (thSender != null) {
+            thSender.interrupt();
+        }
     }
 
     public int getPort() {
@@ -143,7 +148,6 @@ public class TcpChannelHub implements Service {
         }
         return list;
     }
-
 
     private class Client {
 
@@ -187,9 +191,9 @@ public class TcpChannelHub implements Service {
         @Override
         public String toString() {
             String s = "Client: " + session.getRemoteAddress();
-            if( lastMessageTime != null ) {
+            if (lastMessageTime != null) {
                 long tm = System.currentTimeMillis() - lastMessageTime;
-                s += " last message=" + (tm/1000) + "secs ago";
+                s += " last message=" + (tm / 1000) + "secs ago";
             }
             return s;
         }
