@@ -11,6 +11,7 @@ import org.apache.mina.core.future.ConnectFuture;
 import org.apache.mina.core.service.IoHandler;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
+import org.apache.mina.filter.FilterEvent;
 import org.apache.mina.filter.codec.ProtocolCodecFilter;
 import org.apache.mina.filter.codec.serialization.ObjectSerializationCodecFactory;
 import org.apache.mina.transport.socket.SocketSessionConfig;
@@ -235,6 +236,16 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
     @Override
     public void messageSent(IoSession session, Object message) throws Exception {
         log.info("messageSent");
+    }
+
+    @Override
+    public void inputClosed(IoSession is) throws Exception {
+        
+    }
+
+    @Override
+    public void event(IoSession is, FilterEvent fe) throws Exception {
+        
     }
 
     private class ConnectionMonitor implements Runnable {
