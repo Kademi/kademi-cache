@@ -198,7 +198,7 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
                 + " connectFailedCount=" + connectFailedCount;
         if (lastMessageTime != null) {
             long tm = System.currentTimeMillis() - lastMessageTime;
-            s += " last message sent: " + tm + "ms ago";
+            s += " last message sent: " + (tm/1000) + "secs ago";
         }
         return s;
     }

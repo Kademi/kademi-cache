@@ -85,12 +85,12 @@ public class TcpChannelHub implements Service {
         @Override
         public void messageReceived(IoSession session, Object message) throws Exception {
             Client c = (Client) session.getAttribute("client");
-            if( c != null ) {
+            if (c != null) {
                 c.lastMessageTime = System.currentTimeMillis();
             }
             byte[] data = (byte[]) message;
             Serializable msgObject = (Serializable) SerializationUtils.deserialize(data);
-            log.info("messageReceived: from client {} msgClass={}", c, msgObject.getClass());
+            log.debug("messageReceived: from client {} msgClass={}", c, msgObject.getClass());
             channelListener.handleNotification(null, msgObject);
         }
 
@@ -106,7 +106,7 @@ public class TcpChannelHub implements Service {
         public void sessionOpened(IoSession session) throws Exception {
             Client client = new Client(session);
             clients.add(client);
-            log.info("added new client: " + client);
+            log.debug("added new client: " + client);
             InetSocketAddress remoteAdd = (InetSocketAddress) client.session.getRemoteAddress();
             channelListener.onConnect(client.id, remoteAdd.getAddress());
 
@@ -117,15 +117,20 @@ public class TcpChannelHub implements Service {
             log.error("Exception in TCP channel", cause);
         }
 
-
     }
 
     public void stop() {
         started = false;
-        sendQueue.clear();
-        acceptor.unbind();
+        if (sendQueue != null) {
+            sendQueue.clear();
+        }
+        if (acceptor != null) {
+            acceptor.unbind();
+        }
 
-        thSender.interrupt();
+        if (thSender != null) {
+            thSender.interrupt();
+        }
     }
 
     public int getPort() {
@@ -143,7 +148,6 @@ public class TcpChannelHub implements Service {
         }
         return list;
     }
-
 
     private class Client {
 
@@ -165,7 +169,7 @@ public class TcpChannelHub implements Service {
                 log.info("discarding message because state is stopped");
                 return true;
             }
-            log.info("onData: Hub received", message);
+            log.debug("onData: Hub received", message);
             try {
                 channelListener.handleNotification(id, message);
                 return true;
@@ -187,9 +191,9 @@ public class TcpChannelHub implements Service {
         @Override
         public String toString() {
             String s = "Client: " + session.getRemoteAddress();
-            if( lastMessageTime != null ) {
+            if (lastMessageTime != null) {
                 long tm = System.currentTimeMillis() - lastMessageTime;
-                s += " last message=" + tm + "ms ago";
+                s += " last message=" + (tm / 1000) + "secs ago";
             }
             return s;
         }
