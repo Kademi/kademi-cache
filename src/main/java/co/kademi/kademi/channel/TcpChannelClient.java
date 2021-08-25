@@ -205,47 +205,47 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
 
     @Override
     public void sessionCreated(IoSession session) throws Exception {
-        log.info("sessionCreated");
+
     }
 
     @Override
     public void sessionOpened(IoSession session) throws Exception {
-        log.info("sessionOpened");
+
     }
 
     @Override
     public void sessionClosed(IoSession session) throws Exception {
-        log.info("sessionClosed");
+
     }
 
     @Override
     public void sessionIdle(IoSession session, IdleStatus status) throws Exception {
-        log.info("sessionIdle");
+
     }
 
     @Override
     public void exceptionCaught(IoSession session, Throwable cause) throws Exception {
-        log.info("exceptionCaught", cause);
+
     }
 
     @Override
     public void messageReceived(IoSession session, Object message) throws Exception {
-        log.info("messageReceived");
+
     }
 
     @Override
     public void messageSent(IoSession session, Object message) throws Exception {
-        log.info("messageSent");
+
     }
 
     @Override
     public void inputClosed(IoSession is) throws Exception {
-        
+
     }
 
     @Override
     public void event(IoSession is, FilterEvent fe) throws Exception {
-        
+
     }
 
     private class ConnectionMonitor implements Runnable {
@@ -281,18 +281,29 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
         @Override
         public void run() {
             try {
+                long tm = 0;
                 int cnt = 0;
                 while (running) {
                     if (isConnected()) {
                         //might be infinite looping here, somehow
+                        cnt++;
                         QueuedMessage item = sendQueue.take();
                         consume(item);
+
+                        Thread.yield(); // try to be nice to rest of system, in case this is spamming messages
+
+                        if( cnt > 1000 ) {
+                            tm = System.currentTimeMillis() - tm;
+                            log.warn("QueueSender: have sent 1000 messages in {}ms", tm);
+                            cnt = 0;
+                            Thread.sleep(1000); // just in case we're in a tight loop, take a break every 1000 messages for a second
+                        }
                     } else {
                         Thread.sleep(5000);
                     }
                 }
             } catch (InterruptedException ex) {
-                log.warn("thread finished");
+                log.warn("QueueSender: thread finished");
             }
         }
 
