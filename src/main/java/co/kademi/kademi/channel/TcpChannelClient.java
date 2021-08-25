@@ -174,7 +174,7 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
     private synchronized void disconnect() {
         log.info("disconnect");
         if (session != null) {
-            session.close(false);
+            session.closeNow();
         }
         session = null;
     }
@@ -281,9 +281,12 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
         @Override
         public void run() {
             try {
+                int cnt = 0;
                 while (running) {
                     if (isConnected()) {
-                        consume(sendQueue.take());
+                        //might be infinite looping here, somehow
+                        QueuedMessage item = sendQueue.take();
+                        consume(item);
                     } else {
                         Thread.sleep(5000);
                     }
