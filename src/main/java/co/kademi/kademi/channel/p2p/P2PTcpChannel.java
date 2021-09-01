@@ -35,6 +35,8 @@ public final class P2PTcpChannel implements Channel {
 
     private static final Logger log = LoggerFactory.getLogger(P2PTcpChannel.class);
 
+    public static final int MAX_REGISTRATION_ATTEMPTS = 3;
+
     private final String name;
     private final TcpChannelHub server;
     private final List<TcpChannelClient> clients;
@@ -90,8 +92,18 @@ public final class P2PTcpChannel implements Channel {
         InetSocketAddress myAddress = new InetSocketAddress(host, server.getPort());
 
         // Add me to make sure is available to other servers
-        log.info("channel-start: register my address={}", myAddress);
-        discoveryService.registerAddresses(Arrays.asList(myAddress));
+        int attempts = 0;
+        while (attempts < MAX_REGISTRATION_ATTEMPTS) {
+            attempts++;
+            try {
+                log.info("channel-start: register my address={}, attempt {} of {}", myAddress, attempts, MAX_REGISTRATION_ATTEMPTS);
+                discoveryService.registerAddresses(Arrays.asList(myAddress));
+                log.info("channel-start: registration succeeded");
+                break;
+            } catch (Exception ex) {
+                log.info("channel-start: exception occuring in registration {}", ex);
+            }
+        }
 
         log.info("Check for connections to servers. My address={}", myAddress);
         Collection<InetSocketAddress> peerAddresses = discoveryService.getRegisteredAddresses();
