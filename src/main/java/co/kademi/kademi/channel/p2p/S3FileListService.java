@@ -13,8 +13,10 @@ import com.amazonaws.services.s3.model.ObjectListing;
 import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
 import java.io.ByteArrayInputStream;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,9 +61,18 @@ public class S3FileListService implements FileListService {
     private String regionId;
     private boolean initFinished = false;
 
+    private long numCalls;
+    private Throwable lastException;
+
     @Override
     public List<String> getFileList() {
         log.info("getFileList bucket={}", bucketName);
+
+        if (numCalls > Long.MAX_VALUE - 100) {
+            numCalls = 0;
+        }
+        numCalls++;
+
         initClient();
 
         List<String> addrs = new LinkedList<>();
@@ -80,7 +91,8 @@ public class S3FileListService implements FileListService {
                         list = s3.listNextBatchOfObjects(list);
                     }
                 } while (list.isTruncated());
-            } catch (AmazonClientException ex) {
+            } catch (Exception ex) {
+                this.lastException = ex;
                 throw new RuntimeException(ex);
             }
         } else {
@@ -123,7 +135,7 @@ public class S3FileListService implements FileListService {
                 s3 = builder.build();
             } catch (Exception e) {
                 log.error("initClient: Exception. Region={}" + region + " Cred=" + cred + " Bucket=" + bucketName + " RegionID=" + regionId, e);
-                return ;
+                return;
             }
 
             if (!s3.doesBucketExist(bucketName)) {
@@ -203,9 +215,9 @@ public class S3FileListService implements FileListService {
 
         initClient();
 
-        if( s3 == null ) {
+        if (s3 == null) {
             log.warn("addFileList: Cant set file list becasue dont have an s3 client");
-            return ;
+            return;
         }
 
         for (String key : list) {
@@ -235,5 +247,28 @@ public class S3FileListService implements FileListService {
                 throw new RuntimeException("Failed to delete entry [bucketName=" + bucketName + ", entry=" + key + ']', e);
             }
         }
+    }
+
+//    private String bucketName;
+//    private AWSCredentialsProvider cred;
+//    private ClientConfiguration cfg;
+//
+//    private AmazonS3 s3;
+//    private String regionId;
+//    private boolean initFinished = false;
+    @Override
+    public Map<String, Object> getInfo() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("bucketName", bucketName);
+        map.put("regionId", regionId);
+        map.put("initDoneOk", initFinished);
+        if (cred != null && cred.getCredentials() != null) {
+            map.put("accessKey", cred.getCredentials().getAWSAccessKeyId());
+        }
+        map.put("numCalls", numCalls);
+        if (lastException != null) {
+            map.put("lastException", lastException);
+        }
+        return map;
     }
 }

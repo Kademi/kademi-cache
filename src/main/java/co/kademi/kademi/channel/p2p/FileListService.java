@@ -4,6 +4,7 @@
 package co.kademi.kademi.channel.p2p;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  *
@@ -15,4 +16,6 @@ public interface FileListService {
     void addFileList(List<String> list);
 
     void removeFileList(List<String> list);
+
+    Map<String, Object> getInfo();
 }

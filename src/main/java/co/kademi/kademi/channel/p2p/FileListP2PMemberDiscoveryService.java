@@ -6,7 +6,9 @@ package co.kademi.kademi.channel.p2p;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.StringTokenizer;
 import org.slf4j.LoggerFactory;
 
@@ -94,6 +96,14 @@ public class FileListP2PMemberDiscoveryService implements P2PMemberDiscoveryServ
                 .append(addr.getPort());
 
         return sb.toString();
-
     }
+
+    @Override
+    public Map<String, Object> getDiscoInfo() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("fileListService", fileListService.getInfo());
+        return map;
+    }
+
+
 }

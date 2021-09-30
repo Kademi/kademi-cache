@@ -5,8 +5,9 @@ package co.kademi.kademi.channel.p2p;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -88,6 +89,13 @@ public class DirectoryFileListService implements FileListService {
 
     public void setFixed(List<String> fixed) {
         this.fixed = fixed;
+    }
+
+    @Override
+    public Map<String, Object> getInfo() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("dir", dir.getAbsolutePath());
+        return map;
     }
 
 }
