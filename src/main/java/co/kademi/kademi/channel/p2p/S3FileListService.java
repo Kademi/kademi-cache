@@ -226,6 +226,10 @@ public class S3FileListService implements FileListService {
                     log.info("addFileList: item={}", key);
                     s3.putObject(bucketName, key, new ByteArrayInputStream(ENTRY_CONTENT), ENTRY_METADATA);
                 } catch (AmazonClientException e) {
+
+                    log.info("addFileList: exception: " + e, e);
+                    log.info("addFileList: accesskey={}", cred.getCredentials().getAWSAccessKeyId());
+                    log.info("addFileList: region={}", this.regionId);
                     throw new RuntimeException("addFileList: Failed to put entry [bucketName=" + bucketName + ", entry=" + key + ']' + " because: " + e , e);
                 }
             } else {
