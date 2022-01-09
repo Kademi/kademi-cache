@@ -43,6 +43,53 @@ public final class P2PTcpChannel implements Channel {
     private final List<ChannelListener> channelListeners;
     private final P2PMemberDiscoveryService discoveryService;
 
+    private final String registerAddress;
+
+    /**
+     * Use this constructor when the address to bind to is different from the
+     * address to register. Eg when using port forwarding from the host to
+     * docker
+     *
+     * @param name
+     * @param port
+     * @param discoveryService
+     * @param bindAddress - a specific IP address to bind to, eg 0.0.0.0
+     * @param registerAddress - a specific IP address to register for inbound
+     * cluster connections
+     * @throws UnknownHostException
+     * @throws SocketException
+     */
+    public P2PTcpChannel(String name, int port, P2PMemberDiscoveryService discoveryService, String sBindAddress, String registerAddress) throws UnknownHostException, SocketException {
+        this.name = name;
+        this.discoveryService = discoveryService;
+        InetAddress bindAddress = InetAddress.getByName(sBindAddress);
+        this.registerAddress = registerAddress;
+        this.server = new TcpChannelHub(bindAddress, port, new ChannelListener() {
+
+            @Override
+            public void handleNotification(UUID sourceId, Serializable msg) {
+                //log.info("handleNotification: source={} receiver={} msg class={}", sourceId, server.getBindAddress(), msg.getClass());
+                for (ChannelListener l : channelListeners) {
+                    l.handleNotification(sourceId, msg);
+                }
+            }
+
+            @Override
+            public void memberRemoved(UUID sourceId) {
+                log.info("memberRemoved: {}", sourceId);
+            }
+
+            @Override
+            public void onConnect(UUID sourceId, InetAddress remoteAddress) {
+                log.info("onConnect: sourceId={} remoteAddress={}", sourceId, remoteAddress);
+                connectToServers();
+            }
+        });
+        this.clients = new CopyOnWriteArrayList();
+        this.channelListeners = new CopyOnWriteArrayList<>();
+        Channel.register(this);
+    }
+
     public P2PTcpChannel(String name, int port, P2PMemberDiscoveryService discoveryService, String bindPrefix) throws UnknownHostException, SocketException {
         this.name = name;
         this.discoveryService = discoveryService;
@@ -70,15 +117,21 @@ public final class P2PTcpChannel implements Channel {
         });
         this.clients = new CopyOnWriteArrayList();
         this.channelListeners = new CopyOnWriteArrayList<>();
+        this.registerAddress = null;
         Channel.register(this);
     }
 
-    public void start() {
+    public void start() throws UnknownHostException {
         log.info("channel-start");
         server.start();
 
-        InetAddress host = server.getBindAddress();
-        InetSocketAddress myAddress = new InetSocketAddress(host, server.getPort());
+        InetAddress hostAddressToUse;
+        if (registerAddress != null) {
+            hostAddressToUse = InetAddress.getByName(registerAddress);
+        } else {
+            hostAddressToUse = server.getBindAddress();
+        }
+        InetSocketAddress myAddress = new InetSocketAddress(hostAddressToUse, server.getPort());
 
         // Add me
         log.info("channel-start: register my address={}", myAddress);
