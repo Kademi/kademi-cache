@@ -44,6 +44,7 @@ public final class P2PTcpChannel implements Channel {
     private final P2PMemberDiscoveryService discoveryService;
 
     private final String registerAddress;
+    private InetSocketAddress myAddress;    // this is determined during start
 
     /**
      * Use this constructor when the address to bind to is different from the
@@ -131,7 +132,7 @@ public final class P2PTcpChannel implements Channel {
         } else {
             hostAddressToUse = server.getBindAddress();
         }
-        InetSocketAddress myAddress = new InetSocketAddress(hostAddressToUse, server.getPort());
+        myAddress = new InetSocketAddress(hostAddressToUse, server.getPort());
 
         // Add me
         log.info("channel-start: register my address={}", myAddress);
@@ -142,7 +143,7 @@ public final class P2PTcpChannel implements Channel {
 
     public void connectToServers() {
         InetAddress host = server.getBindAddress();
-        InetSocketAddress myAddress = new InetSocketAddress(host, server.getPort());
+        myAddress = new InetSocketAddress(host, server.getPort());
 
         // Add me to make sure is available to other servers
         int attempts = 0;
