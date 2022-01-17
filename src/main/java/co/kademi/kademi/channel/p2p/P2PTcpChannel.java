@@ -142,9 +142,6 @@ public final class P2PTcpChannel implements Channel {
     }
 
     public void connectToServers() {
-        InetAddress host = server.getBindAddress();
-        myAddress = new InetSocketAddress(host, server.getPort());
-
         // Add me to make sure is available to other servers
         int attempts = 0;
         while (attempts < MAX_REGISTRATION_ATTEMPTS) {
