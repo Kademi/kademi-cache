@@ -42,9 +42,13 @@ public final class P2PTcpChannel implements Channel {
     private final List<TcpChannelClient> clients;
     private final List<ChannelListener> channelListeners;
     private final P2PMemberDiscoveryService discoveryService;
+    private final InetAddress bindAddress;
+    private final int serverPort;
+    private final String bindPrefix;
 
     private final String registerAddress;
     private InetSocketAddress myAddress;    // this is determined during start
+
 
     /**
      * Use this constructor when the address to bind to is different from the
@@ -62,8 +66,10 @@ public final class P2PTcpChannel implements Channel {
      */
     public P2PTcpChannel(String name, int port, P2PMemberDiscoveryService discoveryService, String sBindAddress, String registerAddress) throws UnknownHostException, SocketException {
         this.name = name;
+        this.serverPort = port;
+        this.bindPrefix = null;
         this.discoveryService = discoveryService;
-        InetAddress bindAddress = InetAddress.getByName(sBindAddress);
+        bindAddress = InetAddress.getByName(sBindAddress);
         this.registerAddress = registerAddress;
         this.server = new TcpChannelHub(bindAddress, port, new ChannelListener() {
 
@@ -93,8 +99,10 @@ public final class P2PTcpChannel implements Channel {
 
     public P2PTcpChannel(String name, int port, P2PMemberDiscoveryService discoveryService, String bindPrefix) throws UnknownHostException, SocketException {
         this.name = name;
+        this.serverPort = port;
+        this.bindPrefix = bindPrefix;
         this.discoveryService = discoveryService;
-        InetAddress bindAddress = findBindAddress(bindPrefix);
+        bindAddress = findBindAddress(bindPrefix);
         this.server = new TcpChannelHub(bindAddress, port, new ChannelListener() {
 
             @Override
@@ -142,6 +150,9 @@ public final class P2PTcpChannel implements Channel {
     }
 
     public void connectToServers() {
+        InetAddress host = server.getBindAddress();
+        myAddress = new InetSocketAddress(host, server.getPort());
+
         // Add me to make sure is available to other servers
         int attempts = 0;
         while (attempts < MAX_REGISTRATION_ATTEMPTS) {
@@ -252,6 +263,22 @@ public final class P2PTcpChannel implements Channel {
     @Override
     public String getName() {
         return name;
+    }
+
+    public InetAddress getBindAddress() {
+        return bindAddress;
+    }
+
+    public InetSocketAddress getMyAddress() {
+        return myAddress;
+    }
+
+    public int getServerPort() {
+        return serverPort;
+    }
+
+    public String getBindPrefix() {
+        return bindPrefix;
     }
 
     public List<TcpChannelClient> getClients() {

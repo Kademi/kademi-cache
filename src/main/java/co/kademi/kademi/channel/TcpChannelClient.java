@@ -3,7 +3,10 @@ package co.kademi.kademi.channel;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 import org.apache.commons.lang.SerializationUtils;
@@ -54,6 +57,19 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
         this.hubPort = hubPort;
         this.channelListeners = channelListeners;
         this.onLostConnection = onLostConnection;
+    }
+
+    public Map<String, Object> getInfo() {
+        Map<String, Object> map = new HashMap<>();
+        map.put("hubPort", hubPort);
+        if( hubAddress != null ) {
+            map.put("hubAddress", hubAddress.toString());
+        }
+        if( lastMessageTime != null ) {
+            map.put("lastMessageTime", new Date(lastMessageTime));
+        }
+        map.put("connectFailedCount", connectFailedCount);
+        return map;
     }
 
     public int getHubPort() {
@@ -115,7 +131,7 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
     @Override
     protected void finalize() throws Throwable {
         super.finalize();
-        if (running) {
+        if( running ) {
             log.debug("finalize called, but not stopped. Attempt to disconnect..");
             disconnect();
         }
@@ -142,10 +158,10 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
             sessionConf.setReuseAddress(true);
             InetSocketAddress add = new InetSocketAddress(hubAddress, hubPort);
             ConnectFuture future = connector.connect(add);
-            if (future.await(5000)) {
+            if( future.await(5000) ) {
                 try {
                     session = future.getSession();
-                } catch (Exception e) {
+                } catch( Exception e ) {
                     session = null;
                     log.warn("Failed to connect to: " + hubAddress + ":" + hubPort);
                     connectFailedCount++;
@@ -156,16 +172,16 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
                 connectFailedCount++;
             }
 
-        } catch (InterruptedException ex) {
+        } catch( InterruptedException ex ) {
             session = null;
             log.warn("Failed to connect to: " + hubAddress + ":" + hubPort + ". ex: " + ex.toString());
             connectFailedCount++;
         }
-        if (didConnect) {
+        if( didConnect ) {
             try {
                 connectFailedCount = 0;
                 notifyConnected();
-            } catch (Exception e) {
+            } catch( Exception e ) {
                 log.error("exception in notifyConnected", e);
             }
         }
@@ -173,7 +189,7 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
 
     private synchronized void disconnect() {
         log.info("disconnect");
-        if (session != null) {
+        if( session != null ) {
             session.closeNow();
         }
         session = null;
@@ -181,11 +197,11 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
 
     private void notifyConnected() {
         log.debug("notifyConnected");
-        for (ChannelListener l : channelListeners) {
+        for( ChannelListener l : channelListeners ) {
             try {
                 //filter.onConnect(l);
                 l.onConnect(null, hubAddress);
-            } catch (Exception e) {
+            } catch( Exception e ) {
                 log.error("Exception in memberRemoved listener: " + l.getClass(), e);
             }
         }
@@ -196,9 +212,9 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
 
         String s = "server=" + this.hubAddress + ":" + hubPort + "send-queue-size=" + this.sendQueue.size()
                 + " connectFailedCount=" + connectFailedCount;
-        if (lastMessageTime != null) {
+        if( lastMessageTime != null ) {
             long tm = System.currentTimeMillis() - lastMessageTime;
-            s += " last message sent: " + (tm/1000) + "secs ago";
+            s += " last message sent: " + (tm / 1000) + "secs ago";
         }
         return s;
     }
@@ -253,12 +269,12 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
         @Override
         public void run() {
             try {
-                while (running) {
-                    if (!isConnected()) {
+                while( running ) {
+                    if( !isConnected() ) {
                         connect();
 
-                        if (connectFailedCount > MAX_CONNECTION_ATTEMPTS) {
-                            if (onLostConnection != null) {
+                        if( connectFailedCount > MAX_CONNECTION_ATTEMPTS ) {
+                            if( onLostConnection != null ) {
                                 running = false;
                                 onLostConnection.run();
                             }
@@ -266,11 +282,11 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
                     } else {
                         log.trace("still connected to {}:{}", hubAddress, hubPort);
                     }
-                    if (running) {
+                    if( running ) {
                         Thread.sleep(1000);
                     }
                 }
-            } catch (InterruptedException ex) {
+            } catch( InterruptedException ex ) {
                 log.warn("connection monitor interrupted");
             }
         }
@@ -283,8 +299,8 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
             try {
                 long tm = 0;
                 int cnt = 0;
-                while (running) {
-                    if (isConnected()) {
+                while( running ) {
+                    if( isConnected() ) {
                         //might be infinite looping here, somehow
                         cnt++;
                         QueuedMessage item = sendQueue.take();
@@ -302,13 +318,13 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
                         Thread.sleep(5000);
                     }
                 }
-            } catch (InterruptedException ex) {
+            } catch( InterruptedException ex ) {
                 log.warn("QueueSender: thread finished");
             }
         }
 
         private void consume(QueuedMessage msg) {
-            if (session == null) {
+            if( session == null ) {
                 log.warn("QueueSender: socket gone");
                 sendQueue.add(msg);
             } else {
