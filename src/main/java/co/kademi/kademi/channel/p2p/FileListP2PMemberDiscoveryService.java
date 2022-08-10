@@ -3,7 +3,9 @@
  */
 package co.kademi.kademi.channel.p2p;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -79,8 +81,11 @@ public class FileListP2PMemberDiscoveryService implements P2PMemberDiscoveryServ
             }
             if (port != -1) {
                 try {
-                    return new InetSocketAddress(addrStr, port);
+                    InetAddress ia = InetAddress.getByName(addrStr);
+                    return new InetSocketAddress(ia, port);
                 } catch (IllegalArgumentException ex) {
+                    log.error("Failed to parse port for S3 entry: " + key, ex);
+                } catch( UnknownHostException ex ) {
                     log.error("Failed to parse port for S3 entry: " + key, ex);
                 }
             }
