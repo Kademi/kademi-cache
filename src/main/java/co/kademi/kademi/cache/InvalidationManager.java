@@ -28,8 +28,7 @@ public class InvalidationManager {
     private final ThreadLocal<InvalidationState> tlInvalidationActionsList = new ThreadLocal();
     private final Map<String, KademiCacheRegion> mapOfRegions;
     private final CachePartitionService cachePartitionService;
-    private final CircularFifoBuffer recentInvalidations = new CircularFifoBuffer(50);
-
+    private final CircularFifoBuffer recentInvalidations = new CircularFifoBuffer(1000);
 
     public InvalidationManager(Channel channel, CachePartitionService cachePartitionService, Map<String, KademiCacheRegion> mapOfRegions) {
         this.channel = channel;
@@ -43,7 +42,7 @@ public class InvalidationManager {
 
     private InvalidationState getInvalidationState(boolean autocreate) {
         InvalidationState list = tlInvalidationActionsList.get();
-        if (list == null && autocreate) {
+        if( list == null && autocreate ) {
             list = new InvalidationState();
             tlInvalidationActionsList.set(list);
         }
@@ -52,7 +51,7 @@ public class InvalidationManager {
 
     private List<InvalidationAction> enqueuedInvalidations(boolean autocreate) {
         InvalidationState is = getInvalidationState(autocreate);
-        if (is != null) {
+        if( is != null ) {
             return is.invalidationsList;
         }
         return null;
@@ -67,7 +66,7 @@ public class InvalidationManager {
 
     public boolean isCacheLockedForTransaction() {
         InvalidationState is = getInvalidationState(false);
-        if (is == null) {
+        if( is == null ) {
             return false;
         }
         return is.cacheLocked;
@@ -75,15 +74,18 @@ public class InvalidationManager {
 
     public void enqueueInvalidation(String cacheName, KademiCacheRegion.KademiCacheAccessor cacheAccessor, String key, Serializable partitionId) {
         //log.info("enqueueInvalidation: cacheName={} key={}", cacheName, key);
-        recentInvalidations.add(key + " / " + partitionId);
+        // need to syncronize, otherwise can get BufferOverflowException if multiple threads adding
+        synchronized( this ) {
+            recentInvalidations.add(key + " / " + partitionId);
+        }
         List<InvalidationAction> list = enqueuedInvalidations(true);
         InvalidationAction ia = new InvalidationAction(cacheName, cacheAccessor, key, partitionId);
         list.add(ia);
 
         // also need to flush the query cache immediately (as well as after the transaction) to ennsure if the query is called again within the transaction it doesnt get stale results
         // flush all query caches for this partiton
-        for (KademiCacheRegion r : this.mapOfRegions.values()) {
-            if (r instanceof KademiQueryResultsRegion) {
+        for( KademiCacheRegion r : this.mapOfRegions.values() ) {
+            if( r instanceof KademiQueryResultsRegion ) {
                 KademiQueryResultsRegion qrr = (KademiQueryResultsRegion) r;
                 qrr.getCache().invalidateAll(partitionId);
             }
@@ -93,19 +95,19 @@ public class InvalidationManager {
     public void onCommit(Transaction tx) {
         List<InvalidationAction> list = enqueuedInvalidations(false);
         tlInvalidationActionsList.remove();
-        if (list != null && !list.isEmpty() ) {
+        if( list != null && !list.isEmpty() ) {
             //log.info("onCommit: invalidating {} items", list.size());
             Set<Serializable> partitionIds = new HashSet<>();
-            for (InvalidationAction ia : list) {
+            for( InvalidationAction ia : list ) {
                 //log.info("onCommit key={} partition={}", ia.key, ia.partitionId);
                 doInvalidation(ia);
                 partitionIds.add(ia.partitionId);
             }
 
             // flush all query caches for this partiton
-            for (Serializable pId : partitionIds) {
-                for (KademiCacheRegion r : this.mapOfRegions.values()) {
-                    if (r instanceof KademiQueryResultsRegion) {
+            for( Serializable pId : partitionIds ) {
+                for( KademiCacheRegion r : this.mapOfRegions.values() ) {
+                    if( r instanceof KademiQueryResultsRegion ) {
                         KademiQueryResultsRegion qrr = (KademiQueryResultsRegion) r;
                         qrr.getCache().invalidateAll(pId);
                     }
@@ -119,10 +121,10 @@ public class InvalidationManager {
     }
 
     private void doInvalidation(InvalidationAction ia) {
-        if (ia.key != null) {
+        if( ia.key != null ) {
             ia.cacheAccessor.invalidate(ia.key, ia.partitionId);
         }
-        if (channel != null) {
+        if( channel != null ) {
             InvalidateItemMessage m = new InvalidateItemMessage(ia.cacheName, ia.key, ia.partitionId);
             channel.sendNotification(m);
         }
@@ -131,19 +133,19 @@ public class InvalidationManager {
     public void onInvalidateMessage(InvalidateItemMessage iim) {
         //lookup cache, and remove item. do not call invalidate otherwise will recur
         KademiCacheRegion r = null;
-        if (iim.getCacheName() != null) {
+        if( iim.getCacheName() != null ) {
             r = mapOfRegions.get(iim.getCacheName());
-            if (r == null) {
+            if( r == null ) {
                 log.warn("onInvalidateMessage: cache not found: {}", iim.getCacheName());
             } else {
                 r.getCache().invalidate(iim.getKey(), iim.getPartitionId());
             }
         }
 
-        if (r == null || r instanceof KademiEntityRegion) {
+        if( r == null || r instanceof KademiEntityRegion ) {
             // need to invalidate all query results caches
-            for (KademiCacheRegion r2 : mapOfRegions.values()) {
-                if (r2 instanceof KademiQueryResultsRegion) {
+            for( KademiCacheRegion r2 : mapOfRegions.values() ) {
+                if( r2 instanceof KademiQueryResultsRegion ) {
                     KademiQueryResultsRegion qrr = (KademiQueryResultsRegion) r2;
                     //log.info("onInvalidateMessage: Invalidate query cache {} in partition {} due to network message", qrr.getName(), iim.getPartitionId());
                     qrr.getCache().invalidateAll(iim.getPartitionId()); // this will flush the entire cache, for the current partiton only
@@ -157,7 +159,6 @@ public class InvalidationManager {
         list.addAll(recentInvalidations);
         return list;
     }
-
 
     private class InvalidationState {
 
