@@ -43,6 +43,11 @@ public class KademiRegionFactory implements RegionFactory {
     private CachePartitionService cachePartitionService;
     private Map<String, KademiCacheRegion> mapOfRegions;
 
+    public KademiRegionFactory() {
+    }
+
+
+
     @Override
     public void start(Settings stngs, Properties prprts) throws CacheException {
         this.props = prprts;
@@ -106,6 +111,10 @@ public class KademiRegionFactory implements RegionFactory {
 
     public Channel getChannel() {
         return channel;
+    }
+
+    public List<String> getRecentInvalidations() {
+        return imgr.getRecentInvalidations();
     }
 
     @Override

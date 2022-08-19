@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.commons.collections.buffer.CircularFifoBuffer;
 import org.hibernate.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +28,8 @@ public class InvalidationManager {
     private final ThreadLocal<InvalidationState> tlInvalidationActionsList = new ThreadLocal();
     private final Map<String, KademiCacheRegion> mapOfRegions;
     private final CachePartitionService cachePartitionService;
+    private final CircularFifoBuffer recentInvalidations = new CircularFifoBuffer(50);
+
 
     public InvalidationManager(Channel channel, CachePartitionService cachePartitionService, Map<String, KademiCacheRegion> mapOfRegions) {
         this.channel = channel;
@@ -72,6 +75,7 @@ public class InvalidationManager {
 
     public void enqueueInvalidation(String cacheName, KademiCacheRegion.KademiCacheAccessor cacheAccessor, String key, Serializable partitionId) {
         //log.info("enqueueInvalidation: cacheName={} key={}", cacheName, key);
+        recentInvalidations.add(key + " / " + partitionId);
         List<InvalidationAction> list = enqueuedInvalidations(true);
         InvalidationAction ia = new InvalidationAction(cacheName, cacheAccessor, key, partitionId);
         list.add(ia);
@@ -146,8 +150,14 @@ public class InvalidationManager {
                 }
             }
         }
-
     }
+
+    public List<String> getRecentInvalidations() {
+        List<String> list = new ArrayList<>();
+        list.addAll(recentInvalidations);
+        return list;
+    }
+
 
     private class InvalidationState {
 
