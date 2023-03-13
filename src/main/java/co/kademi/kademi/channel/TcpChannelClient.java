@@ -210,8 +210,7 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
     @Override
     public String toString() {
 
-        String s = "server=" + this.hubAddress + ":" + hubPort + "send-queue-size=" + this.sendQueue.size()
-                + " connectFailedCount=" + connectFailedCount;
+        String s = "server=" + this.hubAddress + ":" + hubPort + "send-queue-size=" + sizeOf(this.sendQueue) + " connectFailedCount=" + connectFailedCount;
         if( lastMessageTime != null ) {
             long tm = System.currentTimeMillis() - lastMessageTime;
             s += " last message sent: " + (tm / 1000) + "secs ago";
@@ -262,6 +261,13 @@ public class TcpChannelClient implements LocalAddressAccessor, IoHandler {
     @Override
     public void event(IoSession is, FilterEvent fe) throws Exception {
 
+    }
+
+    private String sizeOf(LinkedBlockingQueue<QueuedMessage> sendQueue) {
+        if( sendQueue == null ) {
+            return "(null)";
+        }
+        return sendQueue.size() + "";
     }
 
     private class ConnectionMonitor implements Runnable {
