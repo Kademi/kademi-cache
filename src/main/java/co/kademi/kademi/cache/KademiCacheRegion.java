@@ -4,6 +4,7 @@ import co.kademi.kademi.cache.channel.InvalidateAllMessage;
 import co.kademi.kademi.channel.Channel;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheStats;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -143,6 +144,15 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
 
         public KademiCacheAccessor() {
             defaultCache = createCache(10); // very short TTL
+        }
+
+        public CacheStats getStats() {
+            CacheStats stats = defaultCache.stats();
+            for( Cache<String, Object> c : mapOfCaches.values()) {
+                CacheStats st = c.stats();
+                stats = stats.plus(st);
+            }
+            return stats;
         }
 
         public boolean contains(Object o) {
