@@ -32,6 +32,7 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
     private final int ttlMins;
     private final int timeout;
     private final int maxSize;
+    private final boolean enableStats;
 
     private final KademiCacheAccessor cacheAccessor = new KademiCacheAccessor();
 
@@ -51,6 +52,9 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
             i = Integer.parseInt(props.getProperty(k));
         }
         this.maxSize = i;
+
+        String sEnableStats = props.getProperty("hibernate.cache.enable_stats", "true");
+        this.enableStats = Boolean.parseBoolean(sEnableStats);
 
         timeout = 600; // not sure of units
 
@@ -220,6 +224,7 @@ public abstract class KademiCacheRegion implements org.hibernate.cache.spi.Regio
         private Cache<String, Object> createCache(int seconds) {
             return CacheBuilder.newBuilder()
                     .maximumSize(maxSize)
+                    .recordStats()
                     .expireAfterWrite(seconds, TimeUnit.SECONDS)
                     .build();
         }
